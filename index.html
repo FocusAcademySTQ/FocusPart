@@ -17,25 +17,41 @@
   </div>
 
   <!-- Formulari afegir classe -->
-  <div class="bg-white shadow p-4 rounded mb-8">
-    <h2 class="font-semibold mb-2">➕ Afegir classe</h2>
-    <div class="flex flex-col gap-2">
-      <select id="day" class="border p-2 rounded">
-        <option value="0">Dilluns</option>
-        <option value="1">Dimarts</option>
-        <option value="2">Dimecres</option>
-        <option value="3">Dijous</option>
-        <option value="4">Divendres</option>
-        <option value="5">Dissabte</option>
-        <option value="6">Diumenge</option>
-      </select>
-      <input type="time" id="time" class="border p-2 rounded">
-      <input type="text" id="teacher" placeholder="Professor/a" class="border p-2 rounded">
-      <input type="text" id="student" placeholder="Alumne" class="border p-2 rounded">
-      <input type="number" id="price" placeholder="Preu (€)" class="border p-2 rounded">
-      <button onclick="addClass()" class="bg-blue-500 text-white px-4 py-2 rounded">Afegir</button>
+ <div class="bg-white shadow p-4 rounded mb-8">
+  <h2 class="font-semibold mb-2">➕ Afegir classe</h2>
+  <div class="flex flex-col gap-2">
+    <select id="day" class="border p-2 rounded">
+      <option value="0">Dilluns</option>
+      <option value="1">Dimarts</option>
+      <option value="2">Dimecres</option>
+      <option value="3">Dijous</option>
+      <option value="4">Divendres</option>
+      <option value="5">Dissabte</option>
+      <option value="6">Diumenge</option>
+    </select>
+    <input type="time" id="time" class="border p-2 rounded">
+    <input type="text" id="teacher" placeholder="Professor/a" class="border p-2 rounded">
+    <input type="text" id="student" placeholder="Alumne" class="border p-2 rounded">
+    <input type="number" id="price" placeholder="Preu (€)" class="border p-2 rounded">
+
+    <!-- Repetició setmanal -->
+    <label class="flex items-center gap-2">
+      <input type="checkbox" id="repeat" class="w-4 h-4">
+      Es repeteix cada setmana
+    </label>
+    <div id="repeatDays" class="hidden grid grid-cols-2 gap-1 text-sm text-gray-700">
+      <label><input type="checkbox" value="0"> Dilluns</label>
+      <label><input type="checkbox" value="1"> Dimarts</label>
+      <label><input type="checkbox" value="2"> Dimecres</label>
+      <label><input type="checkbox" value="3"> Dijous</label>
+      <label><input type="checkbox" value="4"> Divendres</label>
+      <label><input type="checkbox" value="5"> Dissabte</label>
+      <label><input type="checkbox" value="6"> Diumenge</label>
     </div>
+
+    <button onclick="addClass()" class="bg-blue-500 text-white px-4 py-2 rounded">Afegir</button>
   </div>
+</div>
 
   <!-- Resum mensual -->
   <div class="bg-white shadow p-4 rounded">
