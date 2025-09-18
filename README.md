@@ -1,2 +1,0 @@
-# FocusPart
-Particulars
