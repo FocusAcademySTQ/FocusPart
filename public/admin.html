@@ -5,183 +5,117 @@
   <title>Admin - Gestió Classes</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-    }
-    .day {
-      min-height: 100px;
-      background: white;
-      border-radius: 6px;
-      padding: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      font-size: 12px;
-    }
-    .class {
-      background: #e0f2fe;
-      border-radius: 4px;
-      padding: 2px 4px;
-      margin-top: 2px;
-    }
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    .day{min-height:100px;background:white;border-radius:6px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:12px}
+    .class{background:#e0f2fe;border-radius:4px;padding:2px 4px;margin-top:2px}
   </style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
   <h1 class="text-2xl font-bold mb-6">📘 Panell Admin</h1>
-
-  <!-- Professors -->
-  <section class="mb-8">
-    <h2 class="text-lg font-semibold mb-2">👨‍🏫 Professors</h2>
-    <form id="newProfeForm" class="flex flex-wrap gap-2 mb-4">
-      <input type="text" id="profeNom" placeholder="Nom complet" class="border p-2 rounded flex-1" required>
-      <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded flex-1" required>
-      <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded flex-1" required>
-      <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded w-32" required>
-      <button class="bg-blue-500 text-white px-3 rounded">Afegir</button>
-    </form>
-    <ul id="profeList" class="list-disc pl-5 text-sm"></ul>
-  </section>
-
-  <!-- Classes -->
-  <section class="mb-8">
-    <h2 class="text-lg font-semibold mb-2">📅 Classes</h2>
-    <form id="newClassForm" class="grid grid-cols-5 gap-2 mb-4">
-      <input type="text" id="alumne" placeholder="Alumne" class="border p-2 rounded" required>
-      <select id="profeSelect" class="border p-2 rounded" required></select>
-      <input type="date" id="data" class="border p-2 rounded" required>
-      <input type="time" id="hora" class="border p-2 rounded" required>
-      <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
-      <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
-    </form>
-    <ul id="classList" class="list-disc pl-5 text-sm"></ul>
-  </section>
-
-  <!-- Vista mensual -->
-  <section>
-    <h2 class="text-lg font-semibold mb-2">🗓️ Vista mensual</h2>
-    <div class="flex items-center gap-2 mb-4">
-      <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
-      <span id="monthLabel" class="font-semibold"></span>
-      <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
+  <div class="grid grid-cols-3 gap-6">
+    <div class="col-span-2">
+      <section class="mb-8">
+        <h2 class="text-lg font-semibold mb-2">📅 Classes</h2>
+        <form id="newClassForm" class="grid grid-cols-5 gap-2 mb-4">
+          <input type="text" id="alumne" placeholder="Alumne" class="border p-2 rounded" required>
+          <select id="profeSelect" class="border p-2 rounded" required></select>
+          <input type="date" id="data" class="border p-2 rounded" required>
+          <input type="time" id="hora" class="border p-2 rounded" required>
+          <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
+          <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
+        </form>
+        <ul id="classList" class="list-disc pl-5 text-sm"></ul>
+      </section>
+      <section>
+        <h2 class="text-lg font-semibold mb-2">🗓️ Vista mensual</h2>
+        <div class="flex items-center gap-2 mb-4">
+          <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
+          <span id="monthLabel" class="font-semibold"></span>
+          <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
+        </div>
+        <div class="calendar" id="calendar"></div>
+      </section>
     </div>
-    <div class="calendar" id="calendar"></div>
-  </section>
-
+    <div>
+      <section class="mb-8 p-4 bg-white rounded shadow">
+        <h2 class="text-lg font-semibold mb-2">👨‍🏫 Afegir professor</h2>
+        <form id="newProfeForm" class="flex flex-col gap-2 mb-4">
+          <input type="text" id="profeNom" placeholder="Nom complet" class="border p-2 rounded" required>
+          <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded" required>
+          <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded" required>
+          <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
+          <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
+        </form>
+        <ul id="profeList" class="list-disc pl-5 text-sm"></ul>
+      </section>
+      <section class="p-4 bg-white rounded shadow">
+        <h2 class="text-lg font-semibold mb-2">💶 Resum econòmic</h2>
+        <ul id="dinersProfessors" class="list-disc pl-5 text-sm mb-2"></ul>
+        <p class="font-bold">Total global: <span id="totalGlobal">0</span> €</p>
+      </section>
+    </div>
+  </div>
   <script>
-    let currentMonth = new Date();
-
-    // 🔹 Professors
-    async function loadProfessors() {
-      const res = await fetch("/api/professors");
-      const profes = await res.json();
-      document.getElementById("profeList").innerHTML =
-        profes.map(p => `<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
-
-      document.getElementById("profeSelect").innerHTML =
-        "<option value=''>-- Tria profe --</option>" +
-        profes.map(p => `<option value="${p.nom}">${p.nom}</option>`).join("");
+    let currentMonth=new Date();
+    async function loadProfessors(){
+      const res=await fetch("/api/professors");
+      const profes=await res.json();
+      document.getElementById("profeList").innerHTML=profes.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
+      document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+profes.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("")
     }
-
-    document.getElementById("newProfeForm").addEventListener("submit", async e => {
+    document.getElementById("newProfeForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      await fetch("/api/professors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nom: document.getElementById("profeNom").value,
-          usuari: document.getElementById("profeUsuari").value,
-          contrasenya: document.getElementById("profePass").value,
-          valoracio: parseFloat(document.getElementById("profeValoracio").value)
-        })
-      });
+      await fetch("/api/professors",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nom:document.getElementById("profeNom").value,usuari:document.getElementById("profeUsuari").value,contrasenya:document.getElementById("profePass").value,valoracio:parseFloat(document.getElementById("profeValoracio").value)})});
       e.target.reset();
-      loadProfessors();
+      loadProfessors()
     });
-
-    // 🔹 Classes
-    async function loadClasses() {
-      const res = await fetch("/api/classes");
-      const classes = await res.json();
-      document.getElementById("classList").innerHTML = classes.map(c => 
-        `<li>${c.data} ${c.hora} - ${c.alumne} amb ${c.profe} (${c.preu}€) ${c.done ? "✅" : "⏳"} ${c.cancelled ? "❌" : ""}</li>`
-      ).join("");
+    async function loadClasses(){
+      const res=await fetch("/api/classes");
+      const classes=await res.json();
+      document.getElementById("classList").innerHTML=classes.map(c=>`<li>${c.data} ${c.hora} - ${c.alumne} amb ${c.profe} (${c.preu}€) ${c.done?"✅":"⏳"} ${c.cancelled?"❌":""}</li>`).join("");
+      calcularDiners(classes)
     }
-
-    document.getElementById("newClassForm").addEventListener("submit", async e => {
+    document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      await fetch("/api/classes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          alumne: document.getElementById("alumne").value,
-          profe: document.getElementById("profeSelect").value,
-          data: document.getElementById("data").value,
-          hora: document.getElementById("hora").value,
-          preu: parseFloat(document.getElementById("preu").value)
-        })
-      });
+      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne:document.getElementById("alumne").value,profe:document.getElementById("profeSelect").value,data:document.getElementById("data").value,hora:document.getElementById("hora").value,preu:parseFloat(document.getElementById("preu").value)})});
       e.target.reset();
       loadClasses();
-      loadCalendar();
+      loadCalendar()
     });
-
-    // 🔹 Calendari mensual
-    function getMonthDays(year, month) {
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      let days = [];
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-        days.push(new Date(year, month, d));
-      }
-      return days;
+    function getMonthDays(year,month){
+      const lastDay=new Date(year,month+1,0);
+      let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days
     }
-
-    async function loadCalendar() {
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-      const label = currentMonth.toLocaleString("ca-ES", { month: "long", year: "numeric" });
-      document.getElementById("monthLabel").textContent = label;
-
-      const res = await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
-      const classes = await res.json();
-
-      const days = getMonthDays(year, month);
-      const cal = document.getElementById("calendar");
-      cal.innerHTML = "";
-
-      // buits inicials (dilluns primer)
-      let startDay = (new Date(year, month, 1).getDay() + 6) % 7;
-      for (let i = 0; i < startDay; i++) {
-        cal.innerHTML += `<div></div>`;
-      }
-
-      days.forEach(d => {
-        const iso = d.toISOString().split("T")[0];
-        const dayClasses = classes.filter(c => c.data === iso);
-
-        let html = `<div class="day"><div class="font-bold">${d.getDate()}</div>`;
-        dayClasses.forEach(c => {
-          html += `<div class="class">${c.hora} ${c.alumne} (${c.profe})</div>`;
-        });
-        html += `</div>`;
-        cal.innerHTML += html;
-      });
+    async function loadCalendar(){
+      const year=currentMonth.getFullYear();
+      const month=currentMonth.getMonth();
+      const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
+      document.getElementById("monthLabel").textContent=label;
+      const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
+      const classes=await res.json();
+      const days=getMonthDays(year,month);
+      const cal=document.getElementById("calendar");
+      cal.innerHTML="";
+      let startDay=(new Date(year,month,1).getDay()+6)%7;
+      for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
+      days.forEach(d=>{
+        const iso=d.toISOString().split("T")[0];
+        const dayClasses=classes.filter(c=>c.data===iso);
+        let html=`<div class="day"><div class="font-bold">${d.getDate()}</div>`;
+        dayClasses.forEach(c=>{html+=`<div class="class">${c.hora} ${c.alumne} (${c.profe})</div>`});
+        html+="</div>";
+        cal.innerHTML+=html
+      })
     }
-
-    document.getElementById("prevMonth").addEventListener("click", () => {
-      currentMonth.setMonth(currentMonth.getMonth() - 1);
-      loadCalendar();
-    });
-
-    document.getElementById("nextMonth").addEventListener("click", () => {
-      currentMonth.setMonth(currentMonth.getMonth() + 1);
-      loadCalendar();
-    });
-
-    // 🔹 Inicialitzar
-    loadProfessors();
-    loadClasses();
-    loadCalendar();
+    function calcularDiners(classes){
+      const perProfe={};let total=0;
+      classes.forEach(c=>{if(!c.cancelled){perProfe[c.profe]=(perProfe[c.profe]||0)+c.preu;total+=c.preu}});
+      document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("");
+      document.getElementById("totalGlobal").textContent=total
+    }
+    document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
+    document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
+    loadProfessors();loadClasses();loadCalendar();
   </script>
 </body>
 </html>
