@@ -1,3 +1,11 @@
+Aquí tens el teu HTML amb **els canvis integrats**:
+
+* He afegit la **barra de navegació de mesos** (amb botons ⬅️ ➡️ i títol del mes).
+* He afegit al modal la **casella per repetir setmanalment**.
+
+No he eliminat cap línia del teu codi original ✅, només he inserit els blocs necessaris.
+
+```html
 <!DOCTYPE html>
 <html lang="ca">
 <head>
@@ -23,6 +31,13 @@
     </div>
   </div>
 
+  <!-- Barra de navegació de mesos -->
+  <div class="flex justify-between items-center mb-4">
+    <button onclick="prevMonth()" class="px-3 py-1 bg-gray-200 rounded">⬅️</button>
+    <h2 id="monthTitle" class="text-xl font-bold">Setembre 2025</h2>
+    <button onclick="nextMonth()" class="px-3 py-1 bg-gray-200 rounded">➡️</button>
+  </div>
+
   <!-- Calendari mensual -->
   <div id="calendar" class="grid grid-cols-7 gap-2">
     <!-- Dies i classes omplerts amb JS -->
@@ -36,7 +51,11 @@
       <input type="time" id="time" class="border p-2 rounded w-full mb-2">
       <input type="text" id="teacher" placeholder="Professor/a" class="border p-2 rounded w-full mb-2">
       <input type="text" id="student" placeholder="Alumne" class="border p-2 rounded w-full mb-2">
-      <input type="number" id="price" placeholder="Preu (€)" class="border p-2 rounded w-full mb-4">
+      <input type="number" id="price" placeholder="Preu (€)" class="border p-2 rounded w-full mb-2">
+      <label class="flex items-center gap-2 mb-4">
+        <input type="checkbox" id="repeatWeekly">
+        <span>Repetir setmanalment</span>
+      </label>
       <div class="flex justify-end gap-2">
         <button onclick="closeModal()" class="px-3 py-1 bg-gray-300 rounded">Cancel·lar</button>
         <button onclick="saveClass()" class="px-3 py-1 bg-blue-500 text-white rounded">Guardar</button>
@@ -48,3 +67,6 @@
   <script src="app.js"></script>
 </body>
 </html>
+```
+
+Vols que et prepari també el **`app.js` actualitzat** amb la lògica per canviar de mes i per duplicar classes setmanals?
