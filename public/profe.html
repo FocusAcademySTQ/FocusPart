@@ -8,20 +8,70 @@
 <body class="bg-gray-50 p-6 font-sans">
   <h1 class="text-2xl font-bold mb-6">👨‍🏫 Panell Professor</h1>
   <p id="welcome" class="mb-4"></p>
+
+  <!-- Afegir nova classe -->
+  <form id="newClassForm" class="grid grid-cols-5 gap-2 mb-6">
+    <input type="text" id="alumne" placeholder="Alumne" class="border p-2 rounded" required>
+    <input type="date" id="data" class="border p-2 rounded" required>
+    <input type="time" id="hora" class="border p-2 rounded" required>
+    <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
+    <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
+  </form>
+
+  <!-- Classes del profe -->
+  <h2 class="text-lg font-semibold mb-2">📅 Les meves classes</h2>
   <ul id="classList" class="list-disc pl-5 text-sm"></ul>
 
   <script>
+    // Recuperar profe del login
     const profe = JSON.parse(localStorage.getItem("profe"));
     if (!profe) window.location.href = "index.html";
-    document.getElementById("welcome").textContent = "Benvingut, " + profe.nom;
+    document.getElementById("welcome").textContent = "Benvingut/da, " + profe.nom;
 
+    // 🔹 Carregar classes del profe
     async function loadClasses() {
       const res = await fetch("/api/classes");
       const classes = await res.json();
       const myClasses = classes.filter(c => c.profe === profe.nom);
-      document.getElementById("classList").innerHTML = myClasses.map(c => 
-        `<li>${c.data} ${c.hora} - ${c.alumne} (${c.preu}€) ${c.done ? "✅" : "⏳"}</li>`
-      ).join("");
+
+      document.getElementById("classList").innerHTML = myClasses.map(c => `
+        <li>
+          ${c.data} ${c.hora} - ${c.alumne} (${c.preu}€) 
+          ${c.done ? "✅" : "⏳"} 
+          <button class="text-green-600" onclick="toggleDone('${c._id}')">✔️</button>
+          <button class="text-red-600" onclick="toggleCancel('${c._id}')">❌</button>
+        </li>
+      `).join("");
+    }
+
+    // 🔹 Afegir nova classe
+    document.getElementById("newClassForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      await fetch("/api/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alumne: document.getElementById("alumne").value,
+          profe: profe.nom,
+          data: document.getElementById("data").value,
+          hora: document.getElementById("hora").value,
+          preu: parseFloat(document.getElementById("preu").value)
+        })
+      });
+      e.target.reset();
+      loadClasses();
+    });
+
+    // 🔹 Marcar classe com feta/pending
+    async function toggleDone(id) {
+      await fetch(`/api/classes/${id}/toggle`, { method: "PUT" });
+      loadClasses();
+    }
+
+    // 🔹 Cancel·lar classe
+    async function toggleCancel(id) {
+      await fetch(`/api/classes/${id}/cancel`, { method: "PUT" });
+      loadClasses();
     }
 
     loadClasses();
