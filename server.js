@@ -66,11 +66,16 @@ app.put("/api/professors/:id", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   const { usuari, contrasenya } = req.body;
   try {
+    // 👇 Cas especial admin
+    if (usuari === "admin" && contrasenya === "Focusgrup4") {
+      return res.json({ id: "0", nom: "Administrador", usuari: "admin", role: "admin" });
+    }
+
+    // 👇 Professors a Mongo
     const user = await Professor.findOne({ usuari, contrasenya });
     if (!user) return res.status(401).json({ error: "Credencials incorrectes" });
 
-    const role = usuari === "admin" ? "admin" : "profe";
-    res.json({ id: user._id, nom: user.nom, usuari: user.usuari, role });
+    res.json({ id: user._id, nom: user.nom, usuari: user.usuari, role: "profe" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
