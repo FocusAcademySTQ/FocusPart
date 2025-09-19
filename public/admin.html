@@ -36,6 +36,10 @@
         </div>
         <div class="calendar" id="calendar"></div>
       </section>
+      <section class="p-4 bg-white rounded shadow mt-4">
+        <h2 class="text-lg font-semibold mb-2">💶 Resum ingressos</h2>
+        <ul id="resumDiners" class="list-disc pl-5 text-sm"></ul>
+      </section>
     </div>
     <div>
       <section class="mb-8 p-4 bg-white rounded shadow">
@@ -106,6 +110,7 @@
       document.getElementById("monthLabel").textContent=label;
       const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
       const classes=await res.json();
+      const profes=await (await fetch("/api/professors")).json();
       const days=getMonthDays(year,month);
       const cal=document.getElementById("calendar");
       cal.innerHTML="";
@@ -118,7 +123,13 @@
         dayClasses.forEach(c=>{html+=`<div class="class">${c.hora} ${c.alumne} (${c.profe})</div>`});
         html+="</div>";
         cal.innerHTML+=html
-      })
+      });
+      const perProfe={};let total=0;
+      classes.filter(c=>!c.cancelled).forEach(c=>{
+        const prof=profes.find(p=>p.nom===c.profe);
+        if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}
+      });
+      document.getElementById("resumDiners").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("")+`<p class="font-bold mt-2">Total global: ${total} €</p>`
     }
     function renderProfessorsTable(profes){
       document.getElementById("profeTable").innerHTML=profes.map(p=>`
@@ -127,13 +138,22 @@
           <td class="border p-2">${p.usuari}</td>
           <td class="border p-2">${p.contrasenya}</td>
           <td class="border p-2"><input type="number" data-id="${p._id}" value="${p.valoracio}" class="border p-1 rounded w-20"></td>
-          <td class="border p-2"><button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateValoracio('${p._id}')">Guardar</button></td>
+          <td class="border p-2 flex gap-1">
+            <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateValoracio('${p._id}')">💾</button>
+            <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteProfe('${p._id}')">🗑️</button>
+          </td>
         </tr>`).join("")
     }
     async function updateValoracio(id){
       const input=document.querySelector(`input[data-id='${id}']`);
       await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({valoracio:parseFloat(input.value)})});
       loadProfessors()
+    }
+    async function deleteProfe(id){
+      if(confirm("Vols eliminar aquest professor?")){
+        await fetch("/api/professors/"+id,{method:"DELETE"});
+        loadProfessors()
+      }
     }
     document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
     document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
