@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ca">
 <head>
@@ -8,6 +9,8 @@
     .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
     .day{min-height:100px;background:white;border-radius:6px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:12px}
     .class{background:#e0f2fe;border-radius:4px;padding:2px 4px;margin-top:2px}
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
+    .modal-content{background:white;padding:20px;border-radius:8px;max-height:80%;overflow-y:auto;width:500px}
   </style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
@@ -46,7 +49,8 @@
           <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
           <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
         </form>
-        <ul id="profeList" class="list-disc pl-5 text-sm"></ul>
+        <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
+        <ul id="profeList" class="list-disc pl-5 text-sm mt-2"></ul>
       </section>
       <section class="p-4 bg-white rounded shadow">
         <h2 class="text-lg font-semibold mb-2">💶 Resum econòmic</h2>
@@ -55,13 +59,34 @@
       </section>
     </div>
   </div>
+  <div id="profeModal" class="modal">
+    <div class="modal-content">
+      <h2 class="text-lg font-semibold mb-4">👥 Usuaris i contrasenyes</h2>
+      <table class="w-full text-sm border">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border p-2">Nom</th>
+            <th class="border p-2">Usuari</th>
+            <th class="border p-2">Contrasenya</th>
+            <th class="border p-2">Valoració (€)</th>
+            <th class="border p-2">Accions</th>
+          </tr>
+        </thead>
+        <tbody id="profeTable"></tbody>
+      </table>
+      <div class="text-right mt-4">
+        <button id="closeModal" class="bg-red-500 text-white px-3 py-1 rounded">Tancar</button>
+      </div>
+    </div>
+  </div>
   <script>
     let currentMonth=new Date();
     async function loadProfessors(){
       const res=await fetch("/api/professors");
       const profes=await res.json();
       document.getElementById("profeList").innerHTML=profes.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
-      document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+profes.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("")
+      document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+profes.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("");
+      renderProfessorsTable(profes)
     }
     document.getElementById("newProfeForm").addEventListener("submit",async e=>{
       e.preventDefault();
@@ -113,9 +138,26 @@
       document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("");
       document.getElementById("totalGlobal").textContent=total
     }
+    function renderProfessorsTable(profes){
+      document.getElementById("profeTable").innerHTML=profes.map(p=>`
+        <tr>
+          <td class="border p-2">${p.nom}</td>
+          <td class="border p-2">${p.usuari}</td>
+          <td class="border p-2">${p.contrasenya}</td>
+          <td class="border p-2"><input type="number" value="${p.valoracio}" class="border p-1 rounded w-20" onchange="updateValoracio('${p._id}',this.value)"></td>
+          <td class="border p-2"><button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateValoracio('${p._id}',document.querySelector('[data-id=\'${p._id}\']').value)">Guardar</button></td>
+        </tr>`).join("")
+    }
+    async function updateValoracio(id,valor){
+      await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({valoracio:parseFloat(valor)})});
+      loadProfessors()
+    }
+    document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
+    document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
     document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
     document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
     loadProfessors();loadClasses();loadCalendar();
   </script>
 </body>
 </html>
+```
