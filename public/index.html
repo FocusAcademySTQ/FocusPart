@@ -23,9 +23,16 @@
       const res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuari,contrasenya})});
       const data=await res.json();
       if(res.ok){
-        if(data.role==="admin"){window.location.href="admin.html"}
-        else{localStorage.setItem("profe",JSON.stringify(data));window.location.href="profe.html"}
-      }else{document.getElementById("msg").textContent="❌ "+data.error}
+        if(data.role==="admin"){
+          localStorage.setItem("admin",JSON.stringify(data));
+          window.location.href="admin.html"
+        }else{
+          localStorage.setItem("profe",JSON.stringify(data));
+          window.location.href="profe.html"
+        }
+      }else{
+        document.getElementById("msg").textContent="❌ "+data.error
+      }
     });
   </script>
 </body>
