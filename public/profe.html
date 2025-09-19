@@ -15,24 +15,25 @@
 <body class="bg-gray-50 p-6 font-sans">
   <h1 class="text-2xl font-bold mb-4">👨‍🏫 Panell Professor</h1>
   <p id="welcome" class="mb-6"></p>
-
-  <!-- Nova classe -->
   <section class="mb-8 p-4 bg-white rounded shadow">
     <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
     <form id="newClassForm" class="grid grid-cols-4 gap-2">
       <input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
       <input type="date" id="data" class="border p-2 rounded col-span-1" required>
       <input type="time" id="hora" class="border p-2 rounded col-span-1" required>
-      <select id="repeticio" class="border p-2 rounded col-span-1">
-        <option value="0">No repetir</option>
-        <option value="1">Repetir 1 setmana</option>
-        <option value="2">Repetir 2 setmanes</option>
+      <select id="diaRepeticio" class="border p-2 rounded col-span-1">
+        <option value="">No repetir</option>
+        <option value="1">Cada dilluns</option>
+        <option value="2">Cada dimarts</option>
+        <option value="3">Cada dimecres</option>
+        <option value="4">Cada dijous</option>
+        <option value="5">Cada divendres</option>
+        <option value="6">Cada dissabte</option>
+        <option value="0">Cada diumenge</option>
       </select>
       <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
     </form>
   </section>
-
-  <!-- Vista mensual -->
   <section class="p-4 bg-white rounded shadow">
     <h2 class="text-lg font-semibold mb-3">🗓️ Les meves classes (vista mensual)</h2>
     <div class="flex items-center gap-2 mb-4">
@@ -42,52 +43,40 @@
     </div>
     <div class="calendar" id="calendar"></div>
   </section>
-
   <script>
     const profe=JSON.parse(localStorage.getItem("profe"));
     if(!profe) window.location.href="index.html";
     document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
     let currentMonth=new Date();
-
-    // 🔹 Crear classe amb repetició
     document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
       const alumne=document.getElementById("alumne").value;
       const data=document.getElementById("data").value;
       const hora=document.getElementById("hora").value;
-      const repeticio=parseInt(document.getElementById("repeticio").value);
-
-      let dates=[new Date(data)];
-      for(let i=1;i<=repeticio;i++){
-        let d=new Date(data);
-        d.setDate(d.getDate()+7*i);
-        dates.push(d);
+      const diaRepeticio=document.getElementById("diaRepeticio").value;
+      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
+      if(diaRepeticio!==""){
+        let start=new Date(data);
+        let end=new Date();end.setMonth(end.getMonth()+3);
+        let current=new Date(start);current.setDate(current.getDate()+7);
+        while(current<=end){
+          if(current.getDay().toString()===diaRepeticio){
+            await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
+          }
+          current.setDate(current.getDate()+7);
+        }
       }
-
-      for(const d of dates){
-        await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-          alumne,
-          profe:profe.nom,
-          data:d.toISOString().split("T")[0],
-          hora
-        })});
-      }
-
       e.target.reset();
       loadCalendar();
     });
-
-    // 🔹 Carregar classes
     async function loadCalendar(){
       const year=currentMonth.getFullYear();
       const month=currentMonth.getMonth();
       const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
       document.getElementById("monthLabel").textContent=label;
-
       const res=await fetch("/api/classes");
       let classes=await res.json();
-      classes=classes.filter(c=>c.profe===profe.nom && !c.cancelled);
-
+      classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
       const days=getMonthDays(year,month);
       const cal=document.getElementById("calendar");
       cal.innerHTML="";
@@ -98,25 +87,16 @@
         const dayClasses=classes.filter(c=>c.data===iso);
         let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
         dayClasses.forEach(c=>{
-          html+=`
-            <div class="class">
-              <span>${c.hora} - ${c.alumne}</span>
-              <div>
-                <button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button>
-                <button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button>
-              </div>
-            </div>`;
+          html+=`<div class="class"><span>${c.hora} - ${c.alumne}</span><div><button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button><button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button></div></div>`;
         });
         html+="</div>";
         cal.innerHTML+=html;
       });
     }
-
     function getMonthDays(year,month){
       const lastDay=new Date(year,month+1,0);
       let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
     }
-
     async function toggleDone(id){
       await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
       loadCalendar();
@@ -125,10 +105,8 @@
       await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
       loadCalendar();
     }
-
     document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
     document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
-
     loadCalendar();
   </script>
 </body>
