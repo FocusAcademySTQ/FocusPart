@@ -15,31 +15,17 @@
     </form>
     <p id="msg" class="text-red-500 mt-3"></p>
   </div>
-
   <script>
-    document.getElementById("loginForm").addEventListener("submit", async e => {
+    document.getElementById("loginForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      const usuari = document.getElementById("usuari").value;
-      const contrasenya = document.getElementById("contrasenya").value;
-
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuari, contrasenya })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        if (data.role === "admin") {
-          window.location.href = "admin.html";
-        } else {
-          localStorage.setItem("profe", JSON.stringify(data));
-          window.location.href = "profe.html";
-        }
-      } else {
-        document.getElementById("msg").textContent = "❌ " + data.error;
-      }
+      const usuari=document.getElementById("usuari").value;
+      const contrasenya=document.getElementById("contrasenya").value;
+      const res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuari,contrasenya})});
+      const data=await res.json();
+      if(res.ok){
+        if(data.role==="admin"){window.location.href="admin.html"}
+        else{localStorage.setItem("profe",JSON.stringify(data));window.location.href="profe.html"}
+      }else{document.getElementById("msg").textContent="❌ "+data.error}
     });
   </script>
 </body>
