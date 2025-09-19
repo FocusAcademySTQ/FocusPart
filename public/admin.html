@@ -23,7 +23,16 @@
           <select id="profeSelect" class="border p-2 rounded" required></select>
           <input type="date" id="data" class="border p-2 rounded" required>
           <input type="time" id="hora" class="border p-2 rounded" required>
-          <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
+          <div class="col-span-5 flex flex-wrap gap-2">
+            <label><input type="checkbox" value="1" class="diaCheck"> Dilluns</label>
+            <label><input type="checkbox" value="2" class="diaCheck"> Dimarts</label>
+            <label><input type="checkbox" value="3" class="diaCheck"> Dimecres</label>
+            <label><input type="checkbox" value="4" class="diaCheck"> Dijous</label>
+            <label><input type="checkbox" value="5" class="diaCheck"> Divendres</label>
+            <label><input type="checkbox" value="6" class="diaCheck"> Dissabte</label>
+            <label><input type="checkbox" value="0" class="diaCheck"> Diumenge</label>
+          </div>
+          <input type="number" id="preu" placeholder="€" class="border p-2 rounded col-span-5" required>
           <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
         </form>
       </section>
@@ -49,6 +58,11 @@
         </form>
         <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
         <ul id="profeList" class="list-disc pl-5 text-sm mt-2"></ul>
+      </section>
+      <section class="p-4 bg-white rounded shadow">
+        <h2 class="text-lg font-semibold mb-2">💶 Resum econòmic mensual</h2>
+        <ul id="dinersProfessors" class="list-disc pl-5 text-sm mb-2"></ul>
+        <p class="font-bold">Total global: <span id="totalGlobal">0</span> €</p>
       </section>
     </div>
   </div>
@@ -76,12 +90,13 @@
     const admin=JSON.parse(localStorage.getItem("admin"));
     if(!admin||admin.role!=="admin"){window.location.href="index.html"}
     let currentMonth=new Date();
+    let professors=[];
     async function loadProfessors(){
       const res=await fetch("/api/professors");
-      const profes=await res.json();
-      document.getElementById("profeList").innerHTML=profes.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
-      document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+profes.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("");
-      renderProfessorsTable(profes)
+      professors=await res.json();
+      document.getElementById("profeList").innerHTML=professors.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
+      document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+professors.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("");
+      renderProfessorsTable(professors)
     }
     document.getElementById("newProfeForm").addEventListener("submit",async e=>{
       e.preventDefault();
@@ -91,7 +106,27 @@
     });
     document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne:document.getElementById("alumne").value,profe:document.getElementById("profeSelect").value,data:document.getElementById("data").value,hora:document.getElementById("hora").value,preu:parseFloat(document.getElementById("preu").value)})});
+      const alumne=document.getElementById("alumne").value;
+      const profe=document.getElementById("profeSelect").value;
+      const data=document.getElementById("data").value;
+      const hora=document.getElementById("hora").value;
+      const preu=parseFloat(document.getElementById("preu").value);
+      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data,hora,preu})});
+      const checks=document.querySelectorAll(".diaCheck:checked");
+      if(checks.length>0){
+        let end=new Date();end.setMonth(end.getMonth()+3);
+        checks.forEach(async chk=>{
+          let targetDay=parseInt(chk.value);
+          let current=new Date(data);
+          current.setDate(current.getDate()+1);
+          while(current<=end){
+            if(current.getDay()===targetDay){
+              await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data:current.toISOString().split("T")[0],hora,preu})});
+            }
+            current.setDate(current.getDate()+1);
+          }
+        });
+      }
       e.target.reset();
       loadCalendar()
     });
@@ -106,6 +141,7 @@
       document.getElementById("monthLabel").textContent=label;
       const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
       const classes=await res.json();
+      calcularDiners(classes);
       const days=getMonthDays(year,month);
       const cal=document.getElementById("calendar");
       cal.innerHTML="";
@@ -119,6 +155,17 @@
         html+="</div>";
         cal.innerHTML+=html
       })
+    }
+    function calcularDiners(classes){
+      const perProfe={};let total=0;
+      classes.forEach(c=>{
+        if(!c.cancelled){
+          const prof=professors.find(p=>p.nom===c.profe);
+          if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}
+        }
+      });
+      document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("");
+      document.getElementById("totalGlobal").textContent=total
     }
     function renderProfessorsTable(profes){
       document.getElementById("profeTable").innerHTML=profes.map(p=>`
