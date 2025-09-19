@@ -55,15 +55,18 @@
       await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
       const checks=document.querySelectorAll(".dayCheck:checked");
       if(checks.length>0){
-        let start=new Date(data);
         let end=new Date();end.setMonth(end.getMonth()+3);
-        let current=new Date(start);current.setDate(current.getDate()+1);
-        while(current<=end){
-          if([...checks].map(c=>c.value).includes(current.getDay().toString())){
-            await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
-          }
+        checks.forEach(async chk=>{
+          let targetDay=parseInt(chk.value);
+          let current=new Date(data);
           current.setDate(current.getDate()+1);
-        }
+          while(current<=end){
+            if(current.getDay()===targetDay){
+              await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
+            }
+            current.setDate(current.getDate()+1);
+          }
+        });
       }
       e.target.reset();
       loadCalendar();
