@@ -18,7 +18,7 @@ const Professor = mongoose.model("Professor", new mongoose.Schema({
   nom: String,
   usuari: { type: String, unique: true },
   contrasenya: String,
-  valoracio: { type: Number, default: 0 } // 💶 quant et quedes per classe d’aquest profe
+  valoracio: { type: Number, default: 0 }
 }));
 
 const Classe = mongoose.model("Classe", new mongoose.Schema({
@@ -43,8 +43,23 @@ app.post("/api/professors", async (req, res) => {
 });
 
 app.get("/api/professors", async (req, res) => {
-  const profes = await Professor.find({}, "nom usuari valoracio");
+  const profes = await Professor.find({}, "nom usuari contrasenya valoracio");
   res.json(profes);
+});
+
+// 🔹 Actualitzar valoració / dades del professor
+app.put("/api/professors/:id", async (req, res) => {
+  try {
+    const profe = await Professor.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!profe) return res.status(404).json({ error: "Professor no trobat" });
+    res.json(profe);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 🔹 API Login
@@ -77,11 +92,12 @@ app.get("/api/classes", async (req, res) => {
     const { month } = req.query;
     let filter = {};
     if (month) {
-      // exemple: month = "2025-09"
       const [year, mon] = month.split("-");
       const start = new Date(year, mon - 1, 1);
       const end = new Date(year, mon, 0, 23, 59, 59);
-      filter = { data: { $gte: start.toISOString().split("T")[0], $lte: end.toISOString().split("T")[0] } };
+      filter = {
+        data: { $gte: start.toISOString().split("T")[0], $lte: end.toISOString().split("T")[0] }
+      };
     }
     const classes = await Classe.find(filter);
     res.json(classes);
