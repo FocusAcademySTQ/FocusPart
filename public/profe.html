@@ -19,11 +19,16 @@
   <!-- Nova classe -->
   <section class="mb-8 p-4 bg-white rounded shadow">
     <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
-    <form id="newClassForm" class="grid grid-cols-3 gap-2">
+    <form id="newClassForm" class="grid grid-cols-4 gap-2">
       <input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
       <input type="date" id="data" class="border p-2 rounded col-span-1" required>
       <input type="time" id="hora" class="border p-2 rounded col-span-1" required>
-      <button class="col-span-3 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
+      <select id="repeticio" class="border p-2 rounded col-span-1">
+        <option value="0">No repetir</option>
+        <option value="1">Repetir 1 setmana</option>
+        <option value="2">Repetir 2 setmanes</option>
+      </select>
+      <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
     </form>
   </section>
 
@@ -44,15 +49,30 @@
     document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
     let currentMonth=new Date();
 
-    // 🔹 Crear classe
+    // 🔹 Crear classe amb repetició
     document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        alumne:document.getElementById("alumne").value,
-        profe:profe.nom,
-        data:document.getElementById("data").value,
-        hora:document.getElementById("hora").value
-      })});
+      const alumne=document.getElementById("alumne").value;
+      const data=document.getElementById("data").value;
+      const hora=document.getElementById("hora").value;
+      const repeticio=parseInt(document.getElementById("repeticio").value);
+
+      let dates=[new Date(data)];
+      for(let i=1;i<=repeticio;i++){
+        let d=new Date(data);
+        d.setDate(d.getDate()+7*i);
+        dates.push(d);
+      }
+
+      for(const d of dates){
+        await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+          alumne,
+          profe:profe.nom,
+          data:d.toISOString().split("T")[0],
+          hora
+        })});
+      }
+
       e.target.reset();
       loadCalendar();
     });
