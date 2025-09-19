@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Gestió Classes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6 font-sans">
+  <h1 class="text-2xl font-bold mb-6">📘 Panell Admin</h1>
+
+  <!-- Professors -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold mb-2">👨‍🏫 Professors</h2>
+    <form id="newProfeForm" class="flex flex-wrap gap-2 mb-4">
+      <input type="text" id="profeNom" placeholder="Nom complet" class="border p-2 rounded flex-1" required>
+      <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded flex-1" required>
+      <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded flex-1" required>
+      <button class="bg-blue-500 text-white px-3 rounded">Afegir</button>
+    </form>
+    <ul id="profeList" class="list-disc pl-5 text-sm"></ul>
+  </section>
+
+  <!-- Classes -->
+  <section>
+    <h2 class="text-lg font-semibold mb-2">📅 Classes</h2>
+    <form id="newClassForm" class="grid grid-cols-5 gap-2 mb-4">
+      <input type="text" id="alumne" placeholder="Alumne" class="border p-2 rounded" required>
+      <select id="profeSelect" class="border p-2 rounded" required></select>
+      <input type="date" id="data" class="border p-2 rounded" required>
+      <input type="time" id="hora" class="border p-2 rounded" required>
+      <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
+      <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
+    </form>
+    <ul id="classList" class="list-disc pl-5 text-sm"></ul>
+  </section>
+
+  <script>
+    // 🔹 Professors
+    async function loadProfessors() {
+      const res = await fetch("/api/professors");
+      const profes = await res.json();
+      document.getElementById("profeList").innerHTML =
+        profes.map(p => `<li>${p.nom} (${p.usuari})</li>`).join("");
+
+      document.getElementById("profeSelect").innerHTML =
+        "<option value=''>-- Tria profe --</option>" +
+        profes.map(p => `<option value="${p.nom}">${p.nom}</option>`).join("");
+    }
+
+    document.getElementById("newProfeForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      await fetch("/api/professors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: document.getElementById("profeNom").value,
+          usuari: document.getElementById("profeUsuari").value,
+          contrasenya: document.getElementById("profePass").value
+        })
+      });
+      e.target.reset();
+      loadProfessors();
+    });
+
+    // 🔹 Classes
+    async function loadClasses() {
+      const res = await fetch("/api/classes");
+      const classes = await res.json();
+      document.getElementById("classList").innerHTML = classes.map(c => 
+        `<li>${c.data} ${c.hora} - ${c.alumne} amb ${c.profe} (${c.preu}€) ${c.done ? "✅" : "⏳"}</li>`
+      ).join("");
+    }
+
+    document.getElementById("newClassForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      await fetch("/api/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alumne: document.getElementById("alumne").value,
+          profe: document.getElementById("profeSelect").value,
+          data: document.getElementById("data").value,
+          hora: document.getElementById("hora").value,
+          preu: parseFloat(document.getElementById("preu").value)
+        })
+      });
+      e.target.reset();
+      loadClasses();
+    });
+
+    // 🔹 Inicialitzar
+    loadProfessors();
+    loadClasses();
+  </script>
+</body>
+</html>
