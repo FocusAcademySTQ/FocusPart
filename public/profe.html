@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Profe - Gestió Classes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6 font-sans">
+  <h1 class="text-2xl font-bold mb-6">👨‍🏫 Panell Professor</h1>
+  <p id="welcome" class="mb-4"></p>
+  <ul id="classList" class="list-disc pl-5 text-sm"></ul>
+
+  <script>
+    const profe = JSON.parse(localStorage.getItem("profe"));
+    if (!profe) window.location.href = "index.html";
+    document.getElementById("welcome").textContent = "Benvingut, " + profe.nom;
+
+    async function loadClasses() {
+      const res = await fetch("/api/classes");
+      const classes = await res.json();
+      const myClasses = classes.filter(c => c.profe === profe.nom);
+      document.getElementById("classList").innerHTML = myClasses.map(c => 
+        `<li>${c.data} ${c.hora} - ${c.alumne} (${c.preu}€) ${c.done ? "✅" : "⏳"}</li>`
+      ).join("");
+    }
+
+    loadClasses();
+  </script>
+</body>
+</html>
