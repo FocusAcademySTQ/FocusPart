@@ -73,7 +73,7 @@
     </div>
   </div>
   <script>
-    const user=JSON.parse(localStorage.getItem("profe"));
+    const user=JSON.parse(localStorage.getItem("admin"));
     if(!user||user.role!=="admin"){window.location.href="index.html"}
     let currentMonth=new Date();
     async function loadProfessors(){
