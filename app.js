@@ -1,6 +1,7 @@
 const days = ["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
 let classes = JSON.parse(localStorage.getItem("classes")) || [];
 let editingId = null; // per saber si estem editant
+let currentDate = new Date(); // mes actual
 
 // 📌 Colors pastel per professors
 const pastelColors = ["bg-blue-100","bg-green-100","bg-pink-100","bg-yellow-100","bg-purple-100","bg-teal-100"];
@@ -27,8 +28,12 @@ function renderCalendar() {
   const calendar = document.getElementById("calendar");
   calendar.innerHTML = "";
 
-  const today = new Date();
-  const monthDays = getMonthDays(today.getFullYear(), today.getMonth());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  document.getElementById("monthTitle").textContent =
+    currentDate.toLocaleString("ca-ES", { month: "long", year: "numeric" });
+
+  const monthDays = getMonthDays(year, month);
 
   // filtres actius
   const teacherFilter = document.getElementById("filterTeacher").value;
@@ -94,6 +99,7 @@ function openModal() {
   document.getElementById("teacher").value = "";
   document.getElementById("student").value = "";
   document.getElementById("price").value = "";
+  document.getElementById("repeatWeekly").checked = false;
   document.getElementById("modal").classList.remove("hidden");
 }
 function closeModal() {
@@ -107,6 +113,7 @@ function saveClass() {
   const teacher = document.getElementById("teacher").value;
   const student = document.getElementById("student").value;
   const price = parseFloat(document.getElementById("price").value) || 0;
+  const repeat = document.getElementById("repeatWeekly").checked;
 
   if (editingId) {
     const c = classes.find(c => c.id === editingId);
@@ -116,6 +123,14 @@ function saveClass() {
   } else {
     const id = Date.now();
     classes.push({ id, date, time, teacher, student, price, cancelled:false });
+    if (repeat) {
+      let start = new Date(date);
+      for (let i = 0; i < 8; i++) { // 8 setmanes ≈ 2 mesos
+        start.setDate(start.getDate() + 7);
+        const idr = Date.now() + i + 1;
+        classes.push({ id: idr, date: start.toISOString().split("T")[0], time, teacher, student, price, cancelled:false });
+      }
+    }
   }
 
   localStorage.setItem("classes", JSON.stringify(classes));
@@ -145,6 +160,16 @@ function toggleCancel(id) {
     localStorage.setItem("classes", JSON.stringify(classes));
     renderCalendar();
   }
+}
+
+// 📌 Canvi de mesos
+function prevMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+}
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
 }
 
 // 📌 Inici
