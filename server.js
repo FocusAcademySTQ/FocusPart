@@ -17,12 +17,13 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 const Professor = mongoose.model("Professor", new mongoose.Schema({
   nom: String,
   usuari: { type: String, unique: true },
-  contrasenya: String
+  contrasenya: String,
+  valoracio: { type: Number, default: 0 } // 💶 quant et quedes per classe d’aquest profe
 }));
 
 const Classe = mongoose.model("Classe", new mongoose.Schema({
   alumne: String,
-  profe: String, // aquí guardarem el nom del profe per simplicitat
+  profe: String, // guardem el nom del profe
   data: String,
   hora: String,
   preu: Number,
@@ -42,8 +43,22 @@ app.post("/api/professors", async (req, res) => {
 });
 
 app.get("/api/professors", async (req, res) => {
-  const profes = await Professor.find({}, "nom usuari");
+  const profes = await Professor.find({}, "nom usuari valoracio");
   res.json(profes);
+});
+
+// 🔹 API Login
+app.post("/api/login", async (req, res) => {
+  const { usuari, contrasenya } = req.body;
+  try {
+    const user = await Professor.findOne({ usuari, contrasenya });
+    if (!user) return res.status(401).json({ error: "Credencials incorrectes" });
+
+    const role = usuari === "admin" ? "admin" : "profe";
+    res.json({ id: user._id, nom: user.nom, usuari: user.usuari, role });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 🔹 API Classes
@@ -58,8 +73,21 @@ app.post("/api/classes", async (req, res) => {
 });
 
 app.get("/api/classes", async (req, res) => {
-  const classes = await Classe.find();
-  res.json(classes);
+  try {
+    const { month } = req.query;
+    let filter = {};
+    if (month) {
+      // exemple: month = "2025-09"
+      const [year, mon] = month.split("-");
+      const start = new Date(year, mon - 1, 1);
+      const end = new Date(year, mon, 0, 23, 59, 59);
+      filter = { data: { $gte: start.toISOString().split("T")[0], $lte: end.toISOString().split("T")[0] } };
+    }
+    const classes = await Classe.find(filter);
+    res.json(classes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put("/api/classes/:id/toggle", async (req, res) => {
@@ -67,6 +95,18 @@ app.put("/api/classes/:id/toggle", async (req, res) => {
     const classe = await Classe.findById(req.params.id);
     if (!classe) return res.status(404).json({ error: "No trobada" });
     classe.done = !classe.done;
+    await classe.save();
+    res.json(classe);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/classes/:id/cancel", async (req, res) => {
+  try {
+    const classe = await Classe.findById(req.params.id);
+    if (!classe) return res.status(404).json({ error: "No trobada" });
+    classe.cancelled = !classe.cancelled;
     await classe.save();
     res.json(classe);
   } catch (err) {
