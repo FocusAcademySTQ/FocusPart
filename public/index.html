@@ -23,11 +23,12 @@
       const res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuari,contrasenya})});
       const data=await res.json();
       if(res.ok){
-        localStorage.clear();
         if(data.role==="admin"){
+          localStorage.removeItem("profe");
           localStorage.setItem("admin",JSON.stringify(data));
           window.location.href="admin.html";
         }else{
+          localStorage.removeItem("admin");
           localStorage.setItem("profe",JSON.stringify(data));
           window.location.href="profe.html";
         }
