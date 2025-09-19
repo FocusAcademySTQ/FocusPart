@@ -6,76 +6,58 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-    .day{min-height:100px;background:white;border-radius:6px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:12px}
-    .class{background:#e0f2fe;border-radius:4px;padding:2px 4px;margin-top:2px}
-    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
-    .modal-content{background:white;padding:20px;border-radius:8px;max-height:80%;overflow-y:auto;width:500px}
+    .day{min-height:100px;background:white;border-radius:6px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:13px;transition:0.2s}
+    .day:hover{background:#f0f9ff}
+    .class{background:#dbeafe;border-radius:4px;padding:2px 4px;margin-top:4px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+    .btn{padding:2px 6px;border-radius:4px;font-size:12px}
   </style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
-  <h1 class="text-2xl font-bold mb-6">📘 Panell Admin</h1>
-  <div class="grid grid-cols-3 gap-6">
-    <div class="col-span-2">
-      <section class="mb-8">
-        <h2 class="text-lg font-semibold mb-2">📅 Classes</h2>
-        <form id="newClassForm" class="grid grid-cols-5 gap-2 mb-4">
-          <input type="text" id="alumne" placeholder="Alumne" class="border p-2 rounded" required>
-          <select id="profeSelect" class="border p-2 rounded" required></select>
-          <input type="date" id="data" class="border p-2 rounded" required>
-          <input type="time" id="hora" class="border p-2 rounded" required>
-          <input type="number" id="preu" placeholder="€" class="border p-2 rounded" required>
-          <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
-        </form>
-      </section>
-      <section>
-        <h2 class="text-lg font-semibold mb-2">🗓️ Vista mensual</h2>
-        <div class="flex items-center gap-2 mb-4">
-          <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
-          <span id="monthLabel" class="font-semibold"></span>
-          <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
-        </div>
-        <div class="calendar" id="calendar"></div>
-      </section>
-      <section class="p-4 bg-white rounded shadow mt-4">
-        <h2 class="text-lg font-semibold mb-2">💶 Resum ingressos</h2>
-        <ul id="resumDiners" class="list-disc pl-5 text-sm"></ul>
-      </section>
-    </div>
-    <div>
-      <section class="mb-8 p-4 bg-white rounded shadow">
-        <h2 class="text-lg font-semibold mb-2">👨‍🏫 Afegir professor</h2>
-        <form id="newProfeForm" class="flex flex-col gap-2 mb-4">
-          <input type="text" id="profeNom" placeholder="Nom complet" class="border p-2 rounded" required>
-          <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded" required>
-          <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded" required>
-          <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
-          <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
-        </form>
-        <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
-        <ul id="profeList" class="list-disc pl-5 text-sm mt-2"></ul>
-      </section>
-    </div>
-  </div>
-  <div id="profeModal" class="modal">
-    <div class="modal-content">
-      <h2 class="text-lg font-semibold mb-4">👥 Usuaris i contrasenyes</h2>
-      <table class="w-full text-sm border">
-        <thead>
-          <tr class="bg-gray-100">
-            <th class="border p-2">Nom</th>
-            <th class="border p-2">Usuari</th>
-            <th class="border p-2">Contrasenya</th>
-            <th class="border p-2">Valoració (€)</th>
-            <th class="border p-2">Accions</th>
-          </tr>
-        </thead>
-        <tbody id="profeTable"></tbody>
-      </table>
-      <div class="text-right mt-4">
-        <button id="closeModal" class="bg-red-500 text-white px-3 py-1 rounded">Tancar</button>
+  <h1 class="text-2xl font-bold mb-4">📘 Panell Administrador</h1>
+  <section class="mb-8 p-4 bg-white rounded shadow">
+    <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
+    <form id="newClassForm" class="grid grid-cols-4 gap-2">
+      <input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
+      <select id="profeSelect" class="border p-2 rounded col-span-1" required></select>
+      <input type="date" id="data" class="border p-2 rounded col-span-1" required>
+      <input type="time" id="hora" class="border p-2 rounded col-span-1" required>
+      <div class="col-span-4 flex flex-wrap gap-2">
+        <label><input type="checkbox" value="1" class="dayCheck"> Dilluns</label>
+        <label><input type="checkbox" value="2" class="dayCheck"> Dimarts</label>
+        <label><input type="checkbox" value="3" class="dayCheck"> Dimecres</label>
+        <label><input type="checkbox" value="4" class="dayCheck"> Dijous</label>
+        <label><input type="checkbox" value="5" class="dayCheck"> Divendres</label>
+        <label><input type="checkbox" value="6" class="dayCheck"> Dissabte</label>
+        <label><input type="checkbox" value="0" class="dayCheck"> Diumenge</label>
       </div>
+      <input type="number" id="preu" placeholder="€" class="border p-2 rounded col-span-1" required>
+      <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
+    </form>
+  </section>
+  <section class="p-4 bg-white rounded shadow">
+    <h2 class="text-lg font-semibold mb-3">🗓️ Vista mensual</h2>
+    <div class="flex items-center gap-2 mb-4">
+      <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
+      <span id="monthLabel" class="font-semibold"></span>
+      <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
     </div>
-  </div>
+    <div class="calendar" id="calendar"></div>
+  </section>
+  <section class="p-4 bg-white rounded shadow mt-6">
+    <h2 class="text-lg font-semibold mb-3">💶 Resum d’ingressos</h2>
+    <table class="w-full text-sm border">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border p-2">Professor</th>
+          <th class="border p-2">Classes</th>
+          <th class="border p-2">€ per classe</th>
+          <th class="border p-2">Total</th>
+        </tr>
+      </thead>
+      <tbody id="resumTaula"></tbody>
+    </table>
+    <p class="font-bold mt-3">Total global: <span id="totalGlobal">0</span> €</p>
+  </section>
   <script>
     const user=JSON.parse(localStorage.getItem("admin"));
     if(!user||user.role!=="admin"){window.location.href="index.html"}
@@ -83,25 +65,35 @@
     async function loadProfessors(){
       const res=await fetch("/api/professors");
       const profes=await res.json();
-      document.getElementById("profeList").innerHTML=profes.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
       document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+profes.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("");
-      renderProfessorsTable(profes)
+      return profes;
     }
-    document.getElementById("newProfeForm").addEventListener("submit",async e=>{
-      e.preventDefault();
-      await fetch("/api/professors",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nom:document.getElementById("profeNom").value,usuari:document.getElementById("profeUsuari").value,contrasenya:document.getElementById("profePass").value,valoracio:parseFloat(document.getElementById("profeValoracio").value)})});
-      e.target.reset();
-      loadProfessors()
-    });
     document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne:document.getElementById("alumne").value,profe:document.getElementById("profeSelect").value,data:document.getElementById("data").value,hora:document.getElementById("hora").value,preu:parseFloat(document.getElementById("preu").value)})});
+      const alumne=document.getElementById("alumne").value;
+      const profe=document.getElementById("profeSelect").value;
+      const data=document.getElementById("data").value;
+      const hora=document.getElementById("hora").value;
+      const preu=parseFloat(document.getElementById("preu").value);
+      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data,hora,preu})});
+      const checks=document.querySelectorAll(".dayCheck:checked");
+      if(checks.length>0){
+        let start=new Date(data);
+        let end=new Date();end.setMonth(end.getMonth()+3);
+        let current=new Date(start);current.setDate(current.getDate()+1);
+        while(current<=end){
+          if([...checks].map(c=>c.value).includes(current.getDay().toString())){
+            await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data:current.toISOString().split("T")[0],hora,preu})});
+          }
+          current.setDate(current.getDate()+1);
+        }
+      }
       e.target.reset();
-      loadCalendar()
+      loadCalendar();
     });
     function getMonthDays(year,month){
       const lastDay=new Date(year,month+1,0);
-      let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days
+      let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
     }
     async function loadCalendar(){
       const year=currentMonth.getFullYear();
@@ -110,7 +102,7 @@
       document.getElementById("monthLabel").textContent=label;
       const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
       const classes=await res.json();
-      const profes=await (await fetch("/api/professors")).json();
+      const profes=await loadProfessors();
       const days=getMonthDays(year,month);
       const cal=document.getElementById("calendar");
       cal.innerHTML="";
@@ -119,47 +111,33 @@
       days.forEach(d=>{
         const iso=d.toISOString().split("T")[0];
         const dayClasses=classes.filter(c=>c.data===iso&&!c.cancelled);
-        let html=`<div class="day"><div class="font-bold">${d.getDate()}</div>`;
-        dayClasses.forEach(c=>{html+=`<div class="class">${c.hora} ${c.alumne} (${c.profe})</div>`});
+        let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
+        dayClasses.forEach(c=>{html+=`<div class="class"><span>${c.hora} - ${c.alumne} (${c.profe})</span></div>`});
         html+="</div>";
-        cal.innerHTML+=html
+        cal.innerHTML+=html;
       });
       const perProfe={};let total=0;
       classes.filter(c=>!c.cancelled).forEach(c=>{
         const prof=profes.find(p=>p.nom===c.profe);
-        if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}
+        if(prof){
+          perProfe[c.profe]=perProfe[c.profe]||{count:0,valoracio:prof.valoracio,total:0};
+          perProfe[c.profe].count++;
+          perProfe[c.profe].total+=prof.valoracio;
+          total+=prof.valoracio;
+        }
       });
-      document.getElementById("resumDiners").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("")+`<p class="font-bold mt-2">Total global: ${total} €</p>`
-    }
-    function renderProfessorsTable(profes){
-      document.getElementById("profeTable").innerHTML=profes.map(p=>`
+      document.getElementById("resumTaula").innerHTML=Object.entries(perProfe).map(([p,d])=>`
         <tr>
-          <td class="border p-2">${p.nom}</td>
-          <td class="border p-2">${p.usuari}</td>
-          <td class="border p-2">${p.contrasenya}</td>
-          <td class="border p-2"><input type="number" data-id="${p._id}" value="${p.valoracio}" class="border p-1 rounded w-20"></td>
-          <td class="border p-2 flex gap-1">
-            <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateValoracio('${p._id}')">💾</button>
-            <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteProfe('${p._id}')">🗑️</button>
-          </td>
-        </tr>`).join("")
+          <td class="border p-2">${p}</td>
+          <td class="border p-2">${d.count}</td>
+          <td class="border p-2">${d.valoracio} €</td>
+          <td class="border p-2 font-bold">${d.total} €</td>
+        </tr>`).join("");
+      document.getElementById("totalGlobal").textContent=total;
     }
-    async function updateValoracio(id){
-      const input=document.querySelector(`input[data-id='${id}']`);
-      await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({valoracio:parseFloat(input.value)})});
-      loadProfessors()
-    }
-    async function deleteProfe(id){
-      if(confirm("Vols eliminar aquest professor?")){
-        await fetch("/api/professors/"+id,{method:"DELETE"});
-        loadProfessors()
-      }
-    }
-    document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
-    document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
     document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
     document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
-    loadProfessors();loadCalendar();
+    loadCalendar();
   </script>
 </body>
 </html>
