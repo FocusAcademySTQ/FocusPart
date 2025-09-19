@@ -10,3 +10,34 @@ body {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* 📌 Capçalera dies del calendari */
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: #4b5563; /* gris suau */
+}
+
+/* 📌 Estil dies */
+#calendar > div {
+  transition: background 0.2s ease;
+}
+#calendar > div:hover {
+  background: #f9fafb; /* hover suau */
+}
+
+/* 📌 Classes segons estat */
+.class-done {
+  background-color: #bbf7d0; /* verd suau */
+}
+.class-pending {
+  background-color: #fde68a; /* groc suau */
+}
+.class-cancelled {
+  background-color: #fecaca; /* vermell suau */
+  text-decoration: line-through;
+  opacity: 0.6;
+}
