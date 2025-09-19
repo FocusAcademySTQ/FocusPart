@@ -1,13 +1,28 @@
 {
   "name": "control-classes",
   "version": "1.0.0",
+  "description": "Aplicació de gestió de classes particulars per admin i professors",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "gestio",
+    "classes",
+    "academia"
+  ],
+  "author": "Focus Academy",
+  "license": "MIT",
   "dependencies": {
+    "dotenv": "^16.3.1",
     "express": "^4.19.2",
-    "mongoose": "^7.6.0",
-    "dotenv": "^16.3.1"
+    "mongoose": "^7.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }
