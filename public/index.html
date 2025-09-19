@@ -18,20 +18,21 @@
   <script>
     document.getElementById("loginForm").addEventListener("submit",async e=>{
       e.preventDefault();
-      const usuari=document.getElementById("usuari").value;
-      const contrasenya=document.getElementById("contrasenya").value;
+      const usuari=document.getElementById("usuari").value.trim();
+      const contrasenya=document.getElementById("contrasenya").value.trim();
       const res=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuari,contrasenya})});
       const data=await res.json();
       if(res.ok){
+        localStorage.clear();
         if(data.role==="admin"){
           localStorage.setItem("admin",JSON.stringify(data));
-          window.location.href="admin.html"
+          window.location.href="admin.html";
         }else{
           localStorage.setItem("profe",JSON.stringify(data));
-          window.location.href="profe.html"
+          window.location.href="profe.html";
         }
       }else{
-        document.getElementById("msg").textContent="❌ "+data.error
+        document.getElementById("msg").textContent="❌ "+data.error;
       }
     });
   </script>
