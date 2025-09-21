@@ -4,6 +4,7 @@ const session=require("express-session");
 require("dotenv").config();
 const app=express();
 const PORT=process.env.PORT||3000;
+
 app.use(express.json());
 app.use(express.static("public"));
 app.use(session({
@@ -11,15 +12,18 @@ app.use(session({
   resave:false,
   saveUninitialized:true
 }));
+
 mongoose.connect(process.env.MONGO_URI,{useNewUrlParser:true,useUnifiedTopology:true})
 .then(()=>console.log("✅ Connectat a MongoDB Atlas"))
 .catch(err=>console.error("❌ Error de connexió:",err));
+
 const Professor=mongoose.model("Professor",new mongoose.Schema({
   nom:String,
   usuari:{type:String,unique:true},
   contrasenya:String,
   valoracio:{type:Number,default:0}
 }));
+
 const Classe=mongoose.model("Classe",new mongoose.Schema({
   alumne:String,
   profe:String,
@@ -30,6 +34,7 @@ const Classe=mongoose.model("Classe",new mongoose.Schema({
   cancelled:{type:Boolean,default:false},
   diesRepeticio:[Number]
 }));
+
 app.post("/api/professors",async(req,res)=>{
   try{
     const profe=new Professor(req.body);
@@ -39,10 +44,12 @@ app.post("/api/professors",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.get("/api/professors",async(req,res)=>{
   const profes=await Professor.find({},"nom usuari contrasenya valoracio");
   res.json(profes);
 });
+
 app.put("/api/professors/:id",async(req,res)=>{
   try{
     const profe=await Professor.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true});
@@ -52,6 +59,7 @@ app.put("/api/professors/:id",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.delete("/api/professors/:id",async(req,res)=>{
   try{
     const result=await Professor.findByIdAndDelete(req.params.id);
@@ -61,6 +69,7 @@ app.delete("/api/professors/:id",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.post("/api/login",async(req,res)=>{
   const{usuari,contrasenya}=req.body;
   try{
@@ -76,6 +85,7 @@ app.post("/api/login",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 // 🔹 Impersonar un professor des de l'admin
 app.get("/admin/impersona/:id",async(req,res)=>{
   try{
@@ -85,11 +95,12 @@ app.get("/admin/impersona/:id",async(req,res)=>{
     const profe=await Professor.findById(req.params.id);
     if(!profe)return res.status(404).send("Professor no trobat");
     req.session.user={id:profe._id,nom:profe.nom,usuari:profe.usuari,role:"profe"};
-    res.redirect("/dashboard.html");
+    res.redirect("/profe.html"); // ✅ Ara apunta a la pàgina correcta
   }catch(err){
     res.status(500).send("Error en impersonar professor");
   }
 });
+
 app.post("/api/classes",async(req,res)=>{
   try{
     const classe=new Classe(req.body);
@@ -99,6 +110,7 @@ app.post("/api/classes",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.get("/api/classes",async(req,res)=>{
   try{
     const{month}=req.query;
@@ -115,6 +127,7 @@ app.get("/api/classes",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.put("/api/classes/:id/toggle",async(req,res)=>{
   try{
     const classe=await Classe.findById(req.params.id);
@@ -126,6 +139,7 @@ app.put("/api/classes/:id/toggle",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.put("/api/classes/:id/cancel",async(req,res)=>{
   try{
     const classe=await Classe.findById(req.params.id);
@@ -137,7 +151,9 @@ app.put("/api/classes/:id/cancel",async(req,res)=>{
     res.status(500).json({error:err.message});
   }
 });
+
 app.get("/api/ping",(req,res)=>{
   res.json({message:"pong 🏓",time:new Date()});
 });
+
 app.listen(PORT,()=>console.log(`🌍 Servidor a http://localhost:${PORT}`));
