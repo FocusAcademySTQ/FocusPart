@@ -21,7 +21,8 @@ const Professor=mongoose.model("Professor",new mongoose.Schema({
   nom:String,
   usuari:{type:String,unique:true},
   contrasenya:String,
-  valoracio:{type:Number,default:0}
+  valoracio:{type:Number,default:0},
+  color:{type:String,default:"#dbeafe"} // 🎨 Color pastel per defecte
 }));
 
 const Classe=mongoose.model("Classe",new mongoose.Schema({
@@ -35,6 +36,7 @@ const Classe=mongoose.model("Classe",new mongoose.Schema({
   diesRepeticio:[Number]
 }));
 
+// 🔹 Afegir professor
 app.post("/api/professors",async(req,res)=>{
   try{
     const profe=new Professor(req.body);
@@ -45,11 +47,13 @@ app.post("/api/professors",async(req,res)=>{
   }
 });
 
+// 🔹 Llistar professors
 app.get("/api/professors",async(req,res)=>{
-  const profes=await Professor.find({},"nom usuari contrasenya valoracio");
+  const profes=await Professor.find({},"nom usuari contrasenya valoracio color");
   res.json(profes);
 });
 
+// 🔹 Actualitzar professor
 app.put("/api/professors/:id",async(req,res)=>{
   try{
     const profe=await Professor.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true});
@@ -60,6 +64,7 @@ app.put("/api/professors/:id",async(req,res)=>{
   }
 });
 
+// 🔹 Eliminar professor
 app.delete("/api/professors/:id",async(req,res)=>{
   try{
     const result=await Professor.findByIdAndDelete(req.params.id);
@@ -70,6 +75,7 @@ app.delete("/api/professors/:id",async(req,res)=>{
   }
 });
 
+// 🔹 Login
 app.post("/api/login",async(req,res)=>{
   const{usuari,contrasenya}=req.body;
   try{
@@ -132,6 +138,7 @@ app.post("/api/classes",async(req,res)=>{
   }
 });
 
+// 🔹 Llistar classes
 app.get("/api/classes",async(req,res)=>{
   try{
     const{month}=req.query;
@@ -149,6 +156,7 @@ app.get("/api/classes",async(req,res)=>{
   }
 });
 
+// 🔹 Marcar com a feta/no feta
 app.put("/api/classes/:id/toggle",async(req,res)=>{
   try{
     const classe=await Classe.findById(req.params.id);
@@ -161,6 +169,7 @@ app.put("/api/classes/:id/toggle",async(req,res)=>{
   }
 });
 
+// 🔹 Cancel·lar/recuperar classe
 app.put("/api/classes/:id/cancel",async(req,res)=>{
   try{
     const classe=await Classe.findById(req.params.id);
@@ -173,6 +182,7 @@ app.put("/api/classes/:id/cancel",async(req,res)=>{
   }
 });
 
+// 🔹 Test endpoint
 app.get("/api/ping",(req,res)=>{
   res.json({message:"pong 🏓",time:new Date()});
 });
