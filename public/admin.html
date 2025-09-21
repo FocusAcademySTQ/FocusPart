@@ -7,9 +7,9 @@
 <style>
 .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .day{min-height:100px;background:white;border-radius:6px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:12px}
-.class{border-radius:4px;padding:2px 4px;margin-top:2px;color:#1f2937;font-weight:500}
+.class{border-radius:4px;padding:2px 4px;margin-top:2px;color:#1e293b;font-weight:500}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
-.modal-content{background:white;padding:20px;border-radius:8px;max-height:80%;overflow-y:auto;width:500px}
+.modal-content{background:white;padding:20px;border-radius:8px;max-height:80%;overflow-y:auto;width:600px}
 </style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
@@ -54,6 +54,7 @@
 <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded" required>
 <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded" required>
 <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
+<input type="color" id="profeColor" value="#dbeafe" class="border p-2 rounded" title="Color del professor">
 <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
 </form>
 <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
@@ -90,24 +91,22 @@
 <script>
 const admin=JSON.parse(localStorage.getItem("admin"));
 if(!admin||admin.role!=="admin"){window.location.href="index.html"}
-let currentMonth=new Date();
-let professors=[];
-const pastelColors=["#fde68a","#a7f3d0","#bfdbfe","#fbcfe8","#c7d2fe","#fca5a5","#fdba74","#bbf7d0"];
+let currentMonth=new Date();let professors=[];
 async function loadProfessors(){
-const res=await fetch("/api/professors");
-professors=await res.json();
-// assignar color per defecte si no té
-professors.forEach((p,i)=>{if(!p.color)p.color=pastelColors[i%pastelColors.length]});
+const res=await fetch("/api/professors");professors=await res.json();
 document.getElementById("profeList").innerHTML=professors.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
 document.getElementById("profeSelect").innerHTML="<option value=''>-- Tria profe --</option>"+professors.map(p=>`<option value="${p.nom}">${p.nom}</option>`).join("");
-renderProfessorsTable(professors)
-}
+renderProfessorsTable(professors)}
 document.getElementById("newProfeForm").addEventListener("submit",async e=>{
 e.preventDefault();
-await fetch("/api/professors",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nom:document.getElementById("profeNom").value,usuari:document.getElementById("profeUsuari").value,contrasenya:document.getElementById("profePass").value,valoracio:parseFloat(document.getElementById("profeValoracio").value),color:pastelColors[Math.floor(Math.random()*pastelColors.length)]})});
-e.target.reset();
-loadProfessors()
-});
+await fetch("/api/professors",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+nom:document.getElementById("profeNom").value,
+usuari:document.getElementById("profeUsuari").value,
+contrasenya:document.getElementById("profePass").value,
+valoracio:parseFloat(document.getElementById("profeValoracio").value),
+color:document.getElementById("profeColor").value||"#dbeafe"
+})});
+e.target.reset();loadProfessors()});
 document.getElementById("newClassForm").addEventListener("submit",async e=>{
 e.preventDefault();
 const alumne=document.getElementById("alumne").value;
@@ -128,54 +127,29 @@ while(current<=end){
 if(current.getDay()===targetDay){
 await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data:current.toISOString().split("T")[0],hora})});
 }
-current.setDate(current.getDate()+7);
-}
-});
-}
-e.target.reset();
-loadCalendar()
-});
-function getMonthDays(year,month){
-const lastDay=new Date(year,month+1,0);
-let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days
-}
+current.setDate(current.getDate()+7)}})}
+e.target.reset();loadCalendar()});
+function getMonthDays(year,month){const lastDay=new Date(year,month+1,0);let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days}
 async function loadCalendar(){
-const year=currentMonth.getFullYear();
-const month=currentMonth.getMonth();
-const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
-document.getElementById("monthLabel").textContent=label;
-const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);
-const classes=await res.json();
-calcularDiners(classes);
-const days=getMonthDays(year,month);
-const cal=document.getElementById("calendar");
-cal.innerHTML="";
-let startDay=(new Date(year,month,1).getDay()+6)%7;
-for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
+const year=currentMonth.getFullYear();const month=currentMonth.getMonth();
+document.getElementById("monthLabel").textContent=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
+const res=await fetch(`/api/classes?month=${year}-${String(month+1).padStart(2,"0")}`);const classes=await res.json();
+calcularDiners(classes);const days=getMonthDays(year,month);const cal=document.getElementById("calendar");cal.innerHTML="";
+let startDay=(new Date(year,month,1).getDay()+6)%7;for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
 days.forEach(d=>{
 const iso=d.toISOString().split("T")[0];
 const dayClasses=classes.filter(c=>c.data===iso&&!c.cancelled);
 let html=`<div class="day"><div class="font-bold">${d.getDate()}</div>`;
 dayClasses.forEach(c=>{
 const prof=professors.find(p=>p.nom===c.profe);
-const color=prof?prof.color:"#e0f2fe";
-html+=`<div class="class" style="background:${color}">${c.hora} ${c.alumne} (${c.profe})</div>`;
-});
-html+="</div>";
-cal.innerHTML+=html
-})
-}
+const bg=prof?.color||"#e0f2fe";
+html+=`<div class="class" style="background:${bg}">${c.hora} ${c.alumne} (${c.profe})</div>`});
+html+="</div>";cal.innerHTML+=html})}
 function calcularDiners(classes){
 const perProfe={};let total=0;
-classes.forEach(c=>{
-if(!c.cancelled){
-const prof=professors.find(p=>p.nom===c.profe);
-if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}
-}
-});
+classes.forEach(c=>{if(!c.cancelled){const prof=professors.find(p=>p.nom===c.profe);if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}}});
 document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("");
-document.getElementById("totalGlobal").textContent=total
-}
+document.getElementById("totalGlobal").textContent=total}
 function renderProfessorsTable(profes){
 document.getElementById("profeTable").innerHTML=profes.map(p=>`
 <tr>
@@ -183,25 +157,17 @@ document.getElementById("profeTable").innerHTML=profes.map(p=>`
 <td class="border p-2">${p.usuari}</td>
 <td class="border p-2">${p.contrasenya}</td>
 <td class="border p-2"><input type="number" data-id="${p._id}" value="${p.valoracio}" class="border p-1 rounded w-20"></td>
-<td class="border p-2"><input type="color" data-color-id="${p._id}" value="${p.color||"#e0f2fe"}" onchange="updateColor('${p._id}',this.value)"></td>
+<td class="border p-2"><input type="color" data-color-id="${p._id}" value="${p.color||"#dbeafe"}" class="w-10 h-8"></td>
 <td class="border p-2">
-<button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateValoracio('${p._id}')">Guardar</button>
+<button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateProfessor('${p._id}')">Guardar</button>
 <button class="bg-green-500 text-white px-2 py-1 rounded" onclick="impersonaProfessor('${p._id}')">Entrar</button>
-</td>
-</tr>`).join("")
-}
-async function updateValoracio(id){
+</td></tr>`).join("")}
+async function updateProfessor(id){
 const input=document.querySelector(`input[data-id='${id}']`);
-await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({valoracio:parseFloat(input.value)})});
-loadProfessors()
-}
-async function updateColor(id,color){
-await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({color})});
-loadProfessors()
-}
-function impersonaProfessor(id){
-window.location.href="/admin/impersona/"+id
-}
+const colorInput=document.querySelector(`input[data-color-id='${id}']`);
+await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+valoracio:parseFloat(input.value),color:colorInput.value})});loadProfessors()}
+function impersonaProfessor(id){window.location.href="/admin/impersona/"+id}
 document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
 document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
 document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
