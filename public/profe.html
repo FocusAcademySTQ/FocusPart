@@ -53,32 +53,52 @@ const profe=JSON.parse(localStorage.getItem("profe"));
 if(!profe) window.location.href="index.html";
 document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
 let currentMonth=new Date();
+
+// 👉 Funció per formatar la data en local (YYYY-MM-DD)
+function formatDateLocal(date){
+  return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+}
+
 document.getElementById("newClassForm").addEventListener("submit",async e=>{
 e.preventDefault();
 const alumne=document.getElementById("alumne").value;
 const data=document.getElementById("data").value;
 const hora=document.getElementById("hora").value;
+
+// Classe inicial
 await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
+
+// Repeticions
 const checks=document.querySelectorAll(".dayCheck:checked");
 if(checks.length>0){
-let endInput=document.getElementById("fiRepeticio").value;
-let end=endInput?new Date(endInput):new Date(data);
-if(!endInput)end.setMonth(end.getMonth()+3);
-let startDate=new Date(data);
-checks.forEach(async chk=>{
-let targetDay=parseInt(chk.value);
-let current=new Date(startDate);
-while(current<=end){
-if(current.getDay()===targetDay){
-await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
-}
-current.setDate(current.getDate()+7);
-}
-});
+  let endInput=document.getElementById("fiRepeticio").value;
+  let end=endInput?new Date(endInput):new Date(data);
+  if(!endInput) end.setMonth(end.getMonth()+3);
+  let startDate=new Date(data);
+
+  checks.forEach(async chk=>{
+    let targetDay=parseInt(chk.value);
+    let current=new Date(startDate);
+
+    // Avança fins al primer dia que coincideixi
+    while(current.getDay()!==targetDay){
+      current.setDate(current.getDate()+1);
+    }
+
+    while(current<=end){
+      await fetch("/api/classes",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora})
+      });
+      current.setDate(current.getDate()+7);
+    }
+  });
 }
 e.target.reset();
 loadCalendar();
 });
+
 async function loadCalendar(){
 const year=currentMonth.getFullYear();
 const month=currentMonth.getMonth();
@@ -94,7 +114,7 @@ cal.innerHTML="";
 let startDay=(new Date(year,month,1).getDay()+6)%7;
 for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
 days.forEach(d=>{
-const iso=d.toISOString().split("T")[0];
+const iso=formatDateLocal(d);
 const dayClasses=classes.filter(c=>c.data===iso);
 let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
 dayClasses.forEach(c=>{
@@ -108,6 +128,7 @@ const alumnesActius=[...new Set(classes.filter(c=>!c.cancelled).map(c=>c.alumne)
 document.getElementById("familiesList").innerHTML=alumnesActius.map(a=>`<li>Família de ${a}</li>`).join("");
 document.getElementById("familiesTotal").textContent="Total: "+alumnesActius.length+" famílies";
 }
+
 function getMonthDays(year,month){
 const lastDay=new Date(year,month+1,0);
 let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
