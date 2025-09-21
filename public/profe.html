@@ -15,6 +15,7 @@
 <body class="bg-gray-50 p-6 font-sans">
   <h1 class="text-2xl font-bold mb-4">👨‍🏫 Panell Professor</h1>
   <p id="welcome" class="mb-6"></p>
+
   <section class="mb-8 p-4 bg-white rounded shadow">
     <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
     <form id="newClassForm" class="grid grid-cols-4 gap-2">
@@ -33,7 +34,8 @@
       <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
     </form>
   </section>
-  <section class="p-4 bg-white rounded shadow">
+
+  <section class="p-4 bg-white rounded shadow mb-8">
     <h2 class="text-lg font-semibold mb-3">🗓️ Les meves classes (vista mensual)</h2>
     <div class="flex items-center gap-2 mb-4">
       <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
@@ -42,11 +44,19 @@
     </div>
     <div class="calendar" id="calendar"></div>
   </section>
+
+  <section class="p-4 bg-white rounded shadow">
+    <h2 class="text-lg font-semibold mb-3">👨‍👩‍👧‍👦 Les meves famílies</h2>
+    <ul id="familiesList" class="list-disc pl-5 text-sm mb-2"></ul>
+    <p id="familiesTotal" class="font-semibold"></p>
+  </section>
+
   <script>
     const profe=JSON.parse(localStorage.getItem("profe"));
     if(!profe) window.location.href="index.html";
     document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
     let currentMonth=new Date();
+
     document.getElementById("newClassForm").addEventListener("submit",async e=>{
       e.preventDefault();
       const alumne=document.getElementById("alumne").value;
@@ -71,6 +81,7 @@
       e.target.reset();
       loadCalendar();
     });
+
     async function loadCalendar(){
       const year=currentMonth.getFullYear();
       const month=currentMonth.getMonth();
@@ -79,6 +90,8 @@
       const res=await fetch("/api/classes");
       let classes=await res.json();
       classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
+
+      // 👉 Vista calendari
       const days=getMonthDays(year,month);
       const cal=document.getElementById("calendar");
       cal.innerHTML="";
@@ -94,21 +107,31 @@
         html+="</div>";
         cal.innerHTML+=html;
       });
+
+      // 👉 Les meves famílies
+      const alumnesUnics=[...new Set(classes.map(c=>c.alumne))];
+      document.getElementById("familiesList").innerHTML=alumnesUnics.map(a=>`<li>Família de ${a}</li>`).join("");
+      document.getElementById("familiesTotal").textContent="Total: "+alumnesUnics.length+" famílies";
     }
+
     function getMonthDays(year,month){
       const lastDay=new Date(year,month+1,0);
       let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
     }
+
     async function toggleDone(id){
       await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
       loadCalendar();
     }
+
     async function toggleCancel(id){
       await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
       loadCalendar();
     }
+
     document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
     document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
+
     loadCalendar();
   </script>
 </body>
