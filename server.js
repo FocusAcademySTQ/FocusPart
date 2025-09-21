@@ -95,13 +95,13 @@ app.get("/admin/impersona/:id",async(req,res)=>{
     const profe=await Professor.findById(req.params.id);
     if(!profe)return res.status(404).send("Professor no trobat");
     req.session.user={id:profe._id,nom:profe.nom,usuari:profe.usuari,role:"profe"};
-    res.redirect("/profe.html");
+    res.redirect("/profe.html"); // ✅ Ara apunta a la pàgina correcta
   }catch(err){
     res.status(500).send("Error en impersonar professor");
   }
 });
 
-// 🔹 Retorna l'usuari actiu de la sessió
+// 🔹 Endpoint per saber qui està loguejat
 app.get("/api/me",(req,res)=>{
   if(req.session.user){
     res.json(req.session.user);
