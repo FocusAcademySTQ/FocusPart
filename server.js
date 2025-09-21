@@ -110,9 +110,26 @@ app.get("/api/me",(req,res)=>{
   }
 });
 
+// 🔹 Crear classes amb preu automàtic segons professor
 app.post("/api/classes",async(req,res)=>{
   try{
-    const classe=new Classe(req.body);
+    const {alumne,profe,data,hora}=req.body;
+
+    // Buscar el professor per nom
+    const professor=await Professor.findOne({nom:profe});
+    if(!professor){
+      return res.status(400).json({error:"Professor no trobat"});
+    }
+
+    // Assignar el valor automàticament
+    const classe=new Classe({
+      alumne,
+      profe,
+      data,
+      hora,
+      preu:professor.valoracio
+    });
+
     await classe.save();
     res.json(classe);
   }catch(err){
