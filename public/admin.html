@@ -33,7 +33,6 @@
 <label><input type="checkbox" value="0" class="diaCheck"> Diumenge</label>
 </div>
 <label class="col-span-5">Fins a: <input type="date" id="fiRepeticio" class="border p-2 rounded"></label>
-<input type="number" id="preu" placeholder="€" class="border p-2 rounded col-span-5" required>
 <button class="col-span-5 bg-blue-500 text-white py-2 rounded">Afegir classe</button>
 </form>
 </section>
@@ -111,8 +110,8 @@ const alumne=document.getElementById("alumne").value;
 const profe=document.getElementById("profeSelect").value;
 const data=document.getElementById("data").value;
 const hora=document.getElementById("hora").value;
-const preu=parseFloat(document.getElementById("preu").value);
-await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data,hora,preu})});
+// Enviar sense preu (el backend ja assigna valoració del professor)
+await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data,hora})});
 const checks=document.querySelectorAll(".diaCheck:checked");
 if(checks.length>0){
 let endInput=document.getElementById("fiRepeticio").value;
@@ -124,7 +123,7 @@ let targetDay=parseInt(chk.value);
 let current=new Date(startDate);
 while(current<=end){
 if(current.getDay()===targetDay){
-await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data:current.toISOString().split("T")[0],hora,preu})});
+await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data:current.toISOString().split("T")[0],hora})});
 }
 current.setDate(current.getDate()+7);
 }
