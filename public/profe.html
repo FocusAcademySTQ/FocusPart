@@ -54,7 +54,7 @@ if(!profe) window.location.href="index.html";
 document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
 let currentMonth=new Date();
 
-// 👉 Funció per formatar la data en local (YYYY-MM-DD)
+// 👉 Format de data local (YYYY-MM-DD)
 function formatDateLocal(date){
   return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
 }
@@ -86,11 +86,14 @@ if(checks.length>0){
     }
 
     while(current<=end){
-      await fetch("/api/classes",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora})
-      });
+      // Evitem duplicar el primer dia
+      if(formatDateLocal(current)!==data){
+        await fetch("/api/classes",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora})
+        });
+      }
       current.setDate(current.getDate()+7);
     }
   });
