@@ -1,10 +1,16 @@
 const express=require("express");
 const mongoose=require("mongoose");
+const session=require("express-session");
 require("dotenv").config();
 const app=express();
 const PORT=process.env.PORT||3000;
 app.use(express.json());
 app.use(express.static("public"));
+app.use(session({
+  secret:"clau_secreta_super_segura",
+  resave:false,
+  saveUninitialized:true
+}));
 mongoose.connect(process.env.MONGO_URI,{useNewUrlParser:true,useUnifiedTopology:true})
 .then(()=>console.log("✅ Connectat a MongoDB Atlas"))
 .catch(err=>console.error("❌ Error de connexió:",err));
@@ -59,13 +65,29 @@ app.post("/api/login",async(req,res)=>{
   const{usuari,contrasenya}=req.body;
   try{
     if(usuari==="admin"&&contrasenya==="Focusgrup4"){
-      return res.json({id:"0",nom:"Administrador",usuari:"admin",role:"admin"});
+      req.session.user={id:"0",nom:"Administrador",usuari:"admin",role:"admin"};
+      return res.json(req.session.user);
     }
     const user=await Professor.findOne({usuari,contrasenya});
     if(!user)return res.status(401).json({error:"Credencials incorrectes"});
-    res.json({id:user._id,nom:user.nom,usuari:user.usuari,role:"profe"});
+    req.session.user={id:user._id,nom:user.nom,usuari:user.usuari,role:"profe"};
+    res.json(req.session.user);
   }catch(err){
     res.status(500).json({error:err.message});
+  }
+});
+// 🔹 Impersonar un professor des de l'admin
+app.get("/admin/impersona/:id",async(req,res)=>{
+  try{
+    if(!req.session.user||req.session.user.role!=="admin"){
+      return res.status(403).send("Accés denegat");
+    }
+    const profe=await Professor.findById(req.params.id);
+    if(!profe)return res.status(404).send("Professor no trobat");
+    req.session.user={id:profe._id,nom:profe.nom,usuari:profe.usuari,role:"profe"};
+    res.redirect("/dashboard.html");
+  }catch(err){
+    res.status(500).send("Error en impersonar professor");
   }
 });
 app.post("/api/classes",async(req,res)=>{
