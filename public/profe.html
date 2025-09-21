@@ -1,138 +1,128 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8">
-  <title>Profe - Gestió Classes</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-    .day{min-height:100px;background:white;border-radius:8px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:13px;transition:0.2s}
-    .day:hover{background:#f0f9ff}
-    .class{background:#dbeafe;border-radius:4px;padding:2px 4px;margin-top:4px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
-    .btn{padding:2px 6px;border-radius:4px;font-size:12px}
-  </style>
+<meta charset="UTF-8">
+<title>Profe - Gestió Classes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{min-height:100px;background:white;border-radius:8px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);font-size:13px;transition:0.2s}
+.day:hover{background:#f0f9ff}
+.class{background:#dbeafe;border-radius:4px;padding:2px 4px;margin-top:4px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.btn{padding:2px 6px;border-radius:4px;font-size:12px}
+</style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
-  <h1 class="text-2xl font-bold mb-4">👨‍🏫 Panell Professor</h1>
-  <p id="welcome" class="mb-6"></p>
-
-  <section class="mb-8 p-4 bg-white rounded shadow">
-    <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
-    <form id="newClassForm" class="grid grid-cols-4 gap-2">
-      <input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
-      <input type="date" id="data" class="border p-2 rounded col-span-1" required>
-      <input type="time" id="hora" class="border p-2 rounded col-span-1" required>
-      <div class="col-span-4 flex flex-wrap gap-2">
-        <label><input type="checkbox" value="1" class="dayCheck"> Dilluns</label>
-        <label><input type="checkbox" value="2" class="dayCheck"> Dimarts</label>
-        <label><input type="checkbox" value="3" class="dayCheck"> Dimecres</label>
-        <label><input type="checkbox" value="4" class="dayCheck"> Dijous</label>
-        <label><input type="checkbox" value="5" class="dayCheck"> Divendres</label>
-        <label><input type="checkbox" value="6" class="dayCheck"> Dissabte</label>
-        <label><input type="checkbox" value="0" class="dayCheck"> Diumenge</label>
-      </div>
-      <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
-    </form>
-  </section>
-
-  <section class="p-4 bg-white rounded shadow mb-8">
-    <h2 class="text-lg font-semibold mb-3">🗓️ Les meves classes (vista mensual)</h2>
-    <div class="flex items-center gap-2 mb-4">
-      <button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
-      <span id="monthLabel" class="font-semibold"></span>
-      <button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
-    </div>
-    <div class="calendar" id="calendar"></div>
-  </section>
-
-  <section class="p-4 bg-white rounded shadow">
-    <h2 class="text-lg font-semibold mb-3">👨‍👩‍👧‍👦 Les meves famílies</h2>
-    <ul id="familiesList" class="list-disc pl-5 text-sm mb-2"></ul>
-    <p id="familiesTotal" class="font-semibold"></p>
-  </section>
-
-  <script>
-    const profe=JSON.parse(localStorage.getItem("profe"));
-    if(!profe) window.location.href="index.html";
-    document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
-    let currentMonth=new Date();
-
-    document.getElementById("newClassForm").addEventListener("submit",async e=>{
-      e.preventDefault();
-      const alumne=document.getElementById("alumne").value;
-      const data=document.getElementById("data").value;
-      const hora=document.getElementById("hora").value;
-      await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
-      const checks=document.querySelectorAll(".dayCheck:checked");
-      if(checks.length>0){
-        let end=new Date();end.setMonth(end.getMonth()+3);
-        checks.forEach(async chk=>{
-          let targetDay=parseInt(chk.value);
-          let current=new Date(data);
-          current.setDate(current.getDate()+1);
-          while(current<=end){
-            if(current.getDay()===targetDay){
-              await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
-            }
-            current.setDate(current.getDate()+1);
-          }
-        });
-      }
-      e.target.reset();
-      loadCalendar();
-    });
-
-    async function loadCalendar(){
-      const year=currentMonth.getFullYear();
-      const month=currentMonth.getMonth();
-      const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
-      document.getElementById("monthLabel").textContent=label;
-      const res=await fetch("/api/classes");
-      let classes=await res.json();
-      classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
-
-      // 👉 Vista calendari
-      const days=getMonthDays(year,month);
-      const cal=document.getElementById("calendar");
-      cal.innerHTML="";
-      let startDay=(new Date(year,month,1).getDay()+6)%7;
-      for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
-      days.forEach(d=>{
-        const iso=d.toISOString().split("T")[0];
-        const dayClasses=classes.filter(c=>c.data===iso);
-        let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
-        dayClasses.forEach(c=>{
-          html+=`<div class="class"><span>${c.hora} - ${c.alumne}</span><div><button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button><button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button></div></div>`;
-        });
-        html+="</div>";
-        cal.innerHTML+=html;
-      });
-
-      // 👉 Les meves famílies
-      const alumnesUnics=[...new Set(classes.map(c=>c.alumne))];
-      document.getElementById("familiesList").innerHTML=alumnesUnics.map(a=>`<li>Família de ${a}</li>`).join("");
-      document.getElementById("familiesTotal").textContent="Total: "+alumnesUnics.length+" famílies";
-    }
-
-    function getMonthDays(year,month){
-      const lastDay=new Date(year,month+1,0);
-      let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
-    }
-
-    async function toggleDone(id){
-      await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
-      loadCalendar();
-    }
-
-    async function toggleCancel(id){
-      await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
-      loadCalendar();
-    }
-
-    document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
-    document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
-
-    loadCalendar();
-  </script>
+<h1 class="text-2xl font-bold mb-4">👨‍🏫 Panell Professor</h1>
+<p id="welcome" class="mb-6"></p>
+<section class="mb-8 p-4 bg-white rounded shadow">
+<h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
+<form id="newClassForm" class="grid grid-cols-4 gap-2">
+<input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
+<input type="date" id="data" class="border p-2 rounded col-span-1" required>
+<input type="time" id="hora" class="border p-2 rounded col-span-1" required>
+<div class="col-span-4 flex flex-wrap gap-2">
+<label><input type="checkbox" value="1" class="dayCheck"> Dilluns</label>
+<label><input type="checkbox" value="2" class="dayCheck"> Dimarts</label>
+<label><input type="checkbox" value="3" class="dayCheck"> Dimecres</label>
+<label><input type="checkbox" value="4" class="dayCheck"> Dijous</label>
+<label><input type="checkbox" value="5" class="dayCheck"> Divendres</label>
+<label><input type="checkbox" value="6" class="dayCheck"> Dissabte</label>
+<label><input type="checkbox" value="0" class="dayCheck"> Diumenge</label>
+</div>
+<label class="col-span-4">Fins a: <input type="date" id="fiRepeticio" class="border p-2 rounded"></label>
+<button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
+</form>
+</section>
+<section class="p-4 bg-white rounded shadow mb-8">
+<h2 class="text-lg font-semibold mb-3">🗓️ Les meves classes (vista mensual)</h2>
+<div class="flex items-center gap-2 mb-4">
+<button id="prevMonth" class="px-2 py-1 bg-gray-200 rounded">⬅️</button>
+<span id="monthLabel" class="font-semibold"></span>
+<button id="nextMonth" class="px-2 py-1 bg-gray-200 rounded">➡️</button>
+</div>
+<div class="calendar" id="calendar"></div>
+</section>
+<section class="p-4 bg-white rounded shadow">
+<h2 class="text-lg font-semibold mb-3">👨‍👩‍👧‍👦 Les meves famílies</h2>
+<ul id="familiesList" class="list-disc pl-5 text-sm mb-2"></ul>
+<p id="familiesTotal" class="font-semibold"></p>
+</section>
+<script>
+const profe=JSON.parse(localStorage.getItem("profe"));
+if(!profe) window.location.href="index.html";
+document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
+let currentMonth=new Date();
+document.getElementById("newClassForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const alumne=document.getElementById("alumne").value;
+const data=document.getElementById("data").value;
+const hora=document.getElementById("hora").value;
+await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
+const checks=document.querySelectorAll(".dayCheck:checked");
+if(checks.length>0){
+let endInput=document.getElementById("fiRepeticio").value;
+let end=endInput?new Date(endInput):new Date(data);
+if(!endInput)end.setMonth(end.getMonth()+3);
+let startDate=new Date(data);
+checks.forEach(async chk=>{
+let targetDay=parseInt(chk.value);
+let current=new Date(startDate);
+while(current<=end){
+if(current.getDay()===targetDay){
+await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data:current.toISOString().split("T")[0],hora})});
+}
+current.setDate(current.getDate()+7);
+}
+});
+}
+e.target.reset();
+loadCalendar();
+});
+async function loadCalendar(){
+const year=currentMonth.getFullYear();
+const month=currentMonth.getMonth();
+const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
+document.getElementById("monthLabel").textContent=label;
+const res=await fetch("/api/classes");
+let classes=await res.json();
+classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
+// 👉 Vista calendari
+const days=getMonthDays(year,month);
+const cal=document.getElementById("calendar");
+cal.innerHTML="";
+let startDay=(new Date(year,month,1).getDay()+6)%7;
+for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
+days.forEach(d=>{
+const iso=d.toISOString().split("T")[0];
+const dayClasses=classes.filter(c=>c.data===iso);
+let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
+dayClasses.forEach(c=>{
+html+=`<div class="class"><span>${c.hora} - ${c.alumne}</span><div><button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button><button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button></div></div>`;
+});
+html+="</div>";
+cal.innerHTML+=html;
+});
+// 👉 Les meves famílies (només si tenen classes actives)
+const alumnesActius=[...new Set(classes.filter(c=>!c.cancelled).map(c=>c.alumne))];
+document.getElementById("familiesList").innerHTML=alumnesActius.map(a=>`<li>Família de ${a}</li>`).join("");
+document.getElementById("familiesTotal").textContent="Total: "+alumnesActius.length+" famílies";
+}
+function getMonthDays(year,month){
+const lastDay=new Date(year,month+1,0);
+let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
+}
+async function toggleDone(id){
+await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
+loadCalendar();
+}
+async function toggleCancel(id){
+await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
+loadCalendar();
+}
+document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
+document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
+loadCalendar();
+</script>
 </body>
 </html>
