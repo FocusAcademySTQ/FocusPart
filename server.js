@@ -95,7 +95,7 @@ app.get("/admin/impersona/:id",async(req,res)=>{
     const profe=await Professor.findById(req.params.id);
     if(!profe)return res.status(404).send("Professor no trobat");
     req.session.user={id:profe._id,nom:profe.nom,usuari:profe.usuari,role:"profe"};
-    res.redirect("/profe.html"); // ✅ Ara apunta a la pàgina correcta
+    res.redirect("/profe.html");
   }catch(err){
     res.status(500).send("Error en impersonar professor");
   }
@@ -110,18 +110,14 @@ app.get("/api/me",(req,res)=>{
   }
 });
 
-// 🔹 Crear classes amb preu automàtic segons professor
+// 🔹 Crear classes amb preu automàtic segons la valoració del professor
 app.post("/api/classes",async(req,res)=>{
   try{
     const {alumne,profe,data,hora}=req.body;
-
-    // Buscar el professor per nom
     const professor=await Professor.findOne({nom:profe});
     if(!professor){
       return res.status(400).json({error:"Professor no trobat"});
     }
-
-    // Assignar el valor automàticament
     const classe=new Classe({
       alumne,
       profe,
@@ -129,7 +125,6 @@ app.post("/api/classes",async(req,res)=>{
       hora,
       preu:professor.valoracio
     });
-
     await classe.save();
     res.json(classe);
   }catch(err){
