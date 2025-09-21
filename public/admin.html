@@ -110,7 +110,6 @@ const alumne=document.getElementById("alumne").value;
 const profe=document.getElementById("profeSelect").value;
 const data=document.getElementById("data").value;
 const hora=document.getElementById("hora").value;
-// Enviar sense preu (el backend ja assigna valoració del professor)
 await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe,data,hora})});
 const checks=document.querySelectorAll(".diaCheck:checked");
 if(checks.length>0){
