@@ -54,7 +54,25 @@
 <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded" required>
 <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded" required>
 <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
-<input type="color" id="profeColor" value="#dbeafe" class="border p-2 rounded" title="Color del professor">
+
+<label for="profeColor">Color del professor:</label>
+<input type="color" id="profeColor" list="pastelColors" value="#a7d8de" class="border p-2 rounded" title="Color del professor">
+
+<datalist id="pastelColors">
+  <option value="#a7d8de">Pastel Blue</option>
+  <option value="#ffd6a5">Pastel Orange</option>
+  <option value="#fdffb6">Pastel Yellow</option>
+  <option value="#caffbf">Pastel Green</option>
+  <option value="#9bf6ff">Pastel Cyan</option>
+  <option value="#bdb2ff">Pastel Purple</option>
+  <option value="#ffc6ff">Pastel Pink</option>
+  <option value="#ffadad">Pastel Red</option>
+  <option value="#d0f4de">Mint</option>
+  <option value="#fdfcdc">Ivory</option>
+  <option value="#e4c1f9">Lavender</option>
+  <option value="#fde2e4">Blush</option>
+</datalist>
+
 <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
 </form>
 <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
