@@ -54,25 +54,21 @@
 <input type="text" id="profeUsuari" placeholder="Usuari" class="border p-2 rounded" required>
 <input type="password" id="profePass" placeholder="Contrasenya" class="border p-2 rounded" required>
 <input type="number" id="profeValoracio" placeholder="Valoració (€)" class="border p-2 rounded" required>
-
-<label for="profeColor">Color del professor:</label>
-<input type="color" id="profeColor" list="pastelColors" value="#a7d8de" class="border p-2 rounded" title="Color del professor">
-
-<datalist id="pastelColors">
-  <option value="#a7d8de">Pastel Blue</option>
-  <option value="#ffd6a5">Pastel Orange</option>
-  <option value="#fdffb6">Pastel Yellow</option>
-  <option value="#caffbf">Pastel Green</option>
-  <option value="#9bf6ff">Pastel Cyan</option>
-  <option value="#bdb2ff">Pastel Purple</option>
-  <option value="#ffc6ff">Pastel Pink</option>
-  <option value="#ffadad">Pastel Red</option>
-  <option value="#d0f4de">Mint</option>
-  <option value="#fdfcdc">Ivory</option>
-  <option value="#e4c1f9">Lavender</option>
-  <option value="#fde2e4">Blush</option>
-</datalist>
-
+<label>Color del professor:</label>
+<select id="profeColor" class="border p-2 rounded">
+  <option value="#fbb6ce" style="background:#fbb6ce">Rosa pastel</option>
+  <option value="#fde68a" style="background:#fde68a">Groc pastel</option>
+  <option value="#a7f3d0" style="background:#a7f3d0">Verd menta</option>
+  <option value="#bfdbfe" style="background:#bfdbfe">Blau cel</option>
+  <option value="#ddd6fe" style="background:#ddd6fe">Lila clar</option>
+  <option value="#fcd5ce" style="background:#fcd5ce">Salmó suau</option>
+  <option value="#fde2e4" style="background:#fde2e4">Rosa pàl·lid</option>
+  <option value="#e0f2fe" style="background:#e0f2fe">Blau molt clar</option>
+  <option value="#ccfbf1" style="background:#ccfbf1">Turquesa suau</option>
+  <option value="#fef9c3" style="background:#fef9c3">Groc suau</option>
+  <option value="#d9f99d" style="background:#d9f99d">Verd llima suau</option>
+  <option value="#fbcfe8" style="background:#fbcfe8">Fúcsia pastel</option>
+</select>
 <button class="bg-blue-500 text-white px-3 py-1 rounded">Afegir</button>
 </form>
 <button id="manageProfessorsBtn" class="bg-green-500 text-white px-3 py-1 rounded">👥 Gestionar professors</button>
@@ -122,7 +118,7 @@ nom:document.getElementById("profeNom").value,
 usuari:document.getElementById("profeUsuari").value,
 contrasenya:document.getElementById("profePass").value,
 valoracio:parseFloat(document.getElementById("profeValoracio").value),
-color:document.getElementById("profeColor").value||"#dbeafe"
+color:document.getElementById("profeColor").value
 })});
 e.target.reset();loadProfessors()});
 document.getElementById("newClassForm").addEventListener("submit",async e=>{
@@ -178,14 +174,29 @@ document.getElementById("profeTable").innerHTML=profes.map(p=>`
 <td class="border p-2">${p.usuari}</td>
 <td class="border p-2">${p.contrasenya}</td>
 <td class="border p-2"><input type="number" data-id="${p._id}" value="${p.valoracio}" class="border p-1 rounded w-20"></td>
-<td class="border p-2"><input type="color" data-color-id="${p._id}" value="${p.color||"#dbeafe"}" class="w-10 h-8"></td>
+<td class="border p-2">
+<select data-color-id="${p._id}" class="border p-1 rounded">
+  <option value="#fbb6ce" ${p.color==="#fbb6ce"?"selected":""}>Rosa pastel</option>
+  <option value="#fde68a" ${p.color==="#fde68a"?"selected":""}>Groc pastel</option>
+  <option value="#a7f3d0" ${p.color==="#a7f3d0"?"selected":""}>Verd menta</option>
+  <option value="#bfdbfe" ${p.color==="#bfdbfe"?"selected":""}>Blau cel</option>
+  <option value="#ddd6fe" ${p.color==="#ddd6fe"?"selected":""}>Lila clar</option>
+  <option value="#fcd5ce" ${p.color==="#fcd5ce"?"selected":""}>Salmó suau</option>
+  <option value="#fde2e4" ${p.color==="#fde2e4"?"selected":""}>Rosa pàl·lid</option>
+  <option value="#e0f2fe" ${p.color==="#e0f2fe"?"selected":""}>Blau molt clar</option>
+  <option value="#ccfbf1" ${p.color==="#ccfbf1"?"selected":""}>Turquesa suau</option>
+  <option value="#fef9c3" ${p.color==="#fef9c3"?"selected":""}>Groc suau</option>
+  <option value="#d9f99d" ${p.color==="#d9f99d"?"selected":""}>Verd llima suau</option>
+  <option value="#fbcfe8" ${p.color==="#fbcfe8"?"selected":""}>Fúcsia pastel</option>
+</select>
+</td>
 <td class="border p-2">
 <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateProfessor('${p._id}')">Guardar</button>
 <button class="bg-green-500 text-white px-2 py-1 rounded" onclick="impersonaProfessor('${p._id}')">Entrar</button>
 </td></tr>`).join("")}
 async function updateProfessor(id){
 const input=document.querySelector(`input[data-id='${id}']`);
-const colorInput=document.querySelector(`input[data-color-id='${id}']`);
+const colorInput=document.querySelector(`select[data-color-id='${id}']`);
 await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({
 valoracio:parseFloat(input.value),color:colorInput.value})});loadProfessors()}
 function impersonaProfessor(id){window.location.href="/admin/impersona/"+id}
