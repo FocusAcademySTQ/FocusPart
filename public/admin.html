@@ -152,10 +152,7 @@ calcularDiners(classes);const days=getMonthDays(year,month);const cal=document.g
 let startDay=(new Date(year,month,1).getDay()+6)%7;for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
 days.forEach(d=>{
 const iso=d.toISOString().split("T")[0];
-const dayClasses=classes.filter(c=>{
-const cDate=new Date(c.data).toISOString().split("T")[0];
-return cDate===iso && !c.cancelled;
-});
+const dayClasses=classes.filter(c=>c.data===iso && !c.cancelled);
 let html=`<div class="day"><div class="font-bold">${d.getDate()}</div>`;
 dayClasses.forEach(c=>{
 const prof=professors.find(p=>p.nom===c.profe);
