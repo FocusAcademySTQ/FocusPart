@@ -192,14 +192,23 @@ document.getElementById("profeTable").innerHTML=profes.map(p=>`
 </select>
 </td>
 <td class="border p-2">
+<div class="flex flex-wrap gap-2">
 <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateProfessor('${p._id}')">Guardar</button>
 <button class="bg-green-500 text-white px-2 py-1 rounded" onclick="impersonaProfessor('${p._id}')">Entrar</button>
+<button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteProfessor('${p._id}')">Eliminar</button>
+</div>
 </td></tr>`).join("")}
 async function updateProfessor(id){
 const input=document.querySelector(`input[data-id='${id}']`);
 const colorInput=document.querySelector(`select[data-color-id='${id}']`);
 await fetch("/api/professors/"+id,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({
 valoracio:parseFloat(input.value),color:colorInput.value})});loadProfessors()}
+async function deleteProfessor(id){
+if(!confirm("Segur que vols eliminar aquest professor?"))return;
+await fetch("/api/professors/"+id,{method:"DELETE"});
+loadProfessors();
+loadCalendar();
+}
 function impersonaProfessor(id){window.location.href="/admin/impersona/"+id}
 document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
 document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
