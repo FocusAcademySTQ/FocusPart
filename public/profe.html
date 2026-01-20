@@ -19,6 +19,8 @@
 <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
 <form id="newClassForm" class="grid grid-cols-4 gap-2">
 <input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
+<input type="tel" id="familiaTelefon" placeholder="Telèfon família" class="border p-2 rounded col-span-1">
+<input type="email" id="familiaEmail" placeholder="Correu família" class="border p-2 rounded col-span-2">
 <input type="date" id="data" class="border p-2 rounded col-span-1" required>
 <input type="time" id="hora" class="border p-2 rounded col-span-1" required>
 <div class="col-span-4 flex flex-wrap gap-2">
@@ -62,11 +64,13 @@ function formatDateLocal(date){
 document.getElementById("newClassForm").addEventListener("submit",async e=>{
 e.preventDefault();
 const alumne=document.getElementById("alumne").value;
+const familiaTelefon=document.getElementById("familiaTelefon").value.trim();
+const familiaEmail=document.getElementById("familiaEmail").value.trim();
 const data=document.getElementById("data").value;
 const hora=document.getElementById("hora").value;
 
 // Classe inicial
-await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora})});
+await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora,familiaEmail,familiaTelefon})});
 
 // Repeticions
 const checks=document.querySelectorAll(".dayCheck:checked");
@@ -91,7 +95,7 @@ if(checks.length>0){
         await fetch("/api/classes",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora})
+          body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora,familiaEmail,familiaTelefon})
         });
       }
       current.setDate(current.getDate()+7);
@@ -127,9 +131,19 @@ html+="</div>";
 cal.innerHTML+=html;
 });
 // 👉 Les meves famílies (només si tenen classes actives)
-const alumnesActius=[...new Set(classes.filter(c=>!c.cancelled).map(c=>c.alumne))];
-document.getElementById("familiesList").innerHTML=alumnesActius.map(a=>`<li>Família de ${a}</li>`).join("");
-document.getElementById("familiesTotal").textContent="Total: "+alumnesActius.length+" famílies";
+const familiesMap=new Map();
+classes.filter(c=>!c.cancelled).forEach(c=>{
+  if(!familiesMap.has(c.alumne)){
+    familiesMap.set(c.alumne,{
+      alumne:c.alumne,
+      email:c.familiaEmail||"",
+      telefon:c.familiaTelefon||""
+    });
+  }
+});
+const families=[...familiesMap.values()];
+document.getElementById("familiesList").innerHTML=families.map(f=>`<li>Família de ${f.alumne}${f.telefon?` · ${f.telefon}`:""}${f.email?` · ${f.email}`:""}</li>`).join("");
+document.getElementById("familiesTotal").textContent="Total: "+families.length+" famílies";
 }
 
 function getMonthDays(year,month){
