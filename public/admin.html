@@ -105,8 +105,11 @@
 </div>
 <div id="familiesModal" class="modal">
 <div class="modal-content">
-<h2 class="text-lg font-semibold mb-4">👨‍👩‍👧‍👦 Famílies i contactes</h2>
-<p class="text-xs text-gray-500 mb-3">Contactes aportats pels professors en crear classes.</p>
+<div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+<h2 class="text-lg font-semibold">👨‍👩‍👧‍👦 Famílies i contactes</h2>
+<button id="copyFamiliesBtn" class="bg-emerald-500 text-white px-3 py-1 rounded">📋 Copiar dades</button>
+</div>
+<p class="text-xs text-gray-500 mb-3">Contactes aportats pels professors en crear classes. La còpia es fa com a columnes: Nom alumne, Telèfon i Correu.</p>
 <table class="w-full text-sm border">
 <thead>
 <tr class="bg-gray-100">
@@ -126,7 +129,7 @@
 <script>
 const admin=JSON.parse(localStorage.getItem("admin"));
 if(!admin||admin.role!=="admin"){window.location.href="index.html"}
-let currentMonth=new Date();let professors=[];
+let currentMonth=new Date();let professors=[];let familiesCache=[];
 async function loadProfessors(){
 const res=await fetch("/api/professors");professors=await res.json();
 document.getElementById("profeList").innerHTML=professors.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
@@ -240,16 +243,17 @@ document.getElementById("manageFamiliesBtn").addEventListener("click",async()=>{
 async function loadFamilies(){
   const res=await fetch("/api/families");
   const families=await res.json();
+  familiesCache=families;
   document.getElementById("familiesTable").innerHTML=families.map(f=>{
     const familyId=encodeURIComponent(f.alumne);
     return `
   <tr>
     <td class="border p-2">Família de ${f.alumne}</td>
     <td class="border p-2">
-      <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-tel value="${f.telefon||""}">
+      <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-name="${f.alumne}" data-family-tel value="${f.telefon||""}">
     </td>
     <td class="border p-2">
-      <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-email value="${f.email||""}">
+      <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-name="${f.alumne}" data-family-email value="${f.email||""}">
     </td>
     <td class="border p-2">
       <div class="flex flex-wrap gap-2">
@@ -278,7 +282,38 @@ async function deleteFamily(familyId){
   await fetch(`/api/families/${familyId}`,{method:"DELETE"});
   loadFamilies();
 }
+function sanitizeClipboardField(value){
+  return String(value||"").replace(/[\t\n\r]+/g," ").trim();
+}
+async function copyFamiliesToClipboard(){
+  const rows=familiesCache.map(f=>{
+    const familyId=encodeURIComponent(f.alumne);
+    const telInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-tel]`);
+    const emailInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-email]`);
+    const alumne=sanitizeClipboardField(f.alumne);
+    const tel=sanitizeClipboardField(telInput?.value||f.telefon||"");
+    const email=sanitizeClipboardField(emailInput?.value||f.email||"");
+    return `${alumne}\t${tel}\t${email}`;
+  });
+  const clipboardText=rows.join("\n");
+  try{
+    await navigator.clipboard.writeText(clipboardText);
+    alert("Dades copiades al porta-retalls.");
+  }catch(err){
+    const temp=document.createElement("textarea");
+    temp.value=clipboardText;
+    temp.style.position="fixed";
+    temp.style.opacity="0";
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+    alert("Dades copiades al porta-retalls.");
+  }
+}
 document.getElementById("closeFamiliesModal").addEventListener("click",()=>{document.getElementById("familiesModal").style.display="none"});
+document.getElementById("copyFamiliesBtn").addEventListener("click",copyFamiliesToClipboard);
 document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
 document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
 loadProfessors();loadCalendar();
