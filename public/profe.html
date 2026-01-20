@@ -48,7 +48,8 @@
 </section>
 <section class="p-4 bg-white rounded shadow">
 <h2 class="text-lg font-semibold mb-3">👨‍👩‍👧‍👦 Les meves famílies</h2>
-<ul id="familiesList" class="list-disc pl-5 text-sm mb-2"></ul>
+<p class="text-xs text-gray-500 mb-2">Pots editar el telèfon i el correu per mantenir els contactes al dia.</p>
+<div id="familiesList" class="space-y-2 text-sm"></div>
 <p id="familiesTotal" class="font-semibold"></p>
 </section>
 <script>
@@ -143,7 +144,18 @@ classes.filter(c=>!c.cancelled).forEach(c=>{
   }
 });
 const families=[...familiesMap.values()];
-document.getElementById("familiesList").innerHTML=families.map(f=>`<li>Família de ${f.alumne}${f.telefon?` · ${f.telefon}`:""}${f.email?` · ${f.email}`:""}</li>`).join("");
+document.getElementById("familiesList").innerHTML=families.map(f=>{
+  const familyId=encodeURIComponent(f.alumne);
+  return `
+  <div class="border rounded p-2">
+    <div class="font-semibold mb-2">Família de ${f.alumne}</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+      <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-tel placeholder="Telèfon" value="${f.telefon||""}">
+      <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-email placeholder="Correu" value="${f.email||""}">
+      <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateFamily('${familyId}')">Guardar</button>
+    </div>
+  </div>`;
+}).join("");
 document.getElementById("familiesTotal").textContent="Total: "+families.length+" famílies";
 }
 
@@ -158,6 +170,18 @@ loadCalendar();
 async function toggleCancel(id){
 await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
 loadCalendar();
+}
+async function updateFamily(familyId){
+  const telInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-tel]`);
+  const emailInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-email]`);
+  await fetch(`/api/families/${familyId}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      telefon:telInput?.value.trim()||"",
+      email:emailInput?.value.trim()||""
+    })
+  });
 }
 document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
 document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
