@@ -33,7 +33,9 @@ const Classe=mongoose.model("Classe",new mongoose.Schema({
   preu:Number,
   done:{type:Boolean,default:false},
   cancelled:{type:Boolean,default:false},
-  diesRepeticio:[Number]
+  diesRepeticio:[Number],
+  familiaEmail:String,
+  familiaTelefon:String
 }));
 
 // 🔹 Afegir professor
@@ -119,7 +121,7 @@ app.get("/api/me",(req,res)=>{
 // 🔹 Crear classes amb preu automàtic segons la valoració del professor
 app.post("/api/classes",async(req,res)=>{
   try{
-    const {alumne,profe,data,hora}=req.body;
+    const {alumne,profe,data,hora,familiaEmail,familiaTelefon}=req.body;
     const professor=await Professor.findOne({nom:profe});
     if(!professor){
       return res.status(400).json({error:"Professor no trobat"});
@@ -129,7 +131,9 @@ app.post("/api/classes",async(req,res)=>{
       profe,
       data,
       hora,
-      preu:professor.valoracio
+      preu:professor.valoracio,
+      familiaEmail,
+      familiaTelefon
     });
     await classe.save();
     res.json(classe);
@@ -151,6 +155,50 @@ app.get("/api/classes",async(req,res)=>{
     }
     const classes=await Classe.find(filter);
     res.json(classes);
+  }catch(err){
+    res.status(500).json({error:err.message});
+  }
+});
+
+// 🔹 Llistar famílies amb contacte
+app.get("/api/families",async(req,res)=>{
+  try{
+    const classes=await Classe.find({});
+    const familiesMap=new Map();
+    classes.forEach(c=>{
+      if(!c.alumne)return;
+      const existing=familiesMap.get(c.alumne)||{alumne:c.alumne,email:"",telefon:""};
+      const email=existing.email||c.familiaEmail||"";
+      const telefon=existing.telefon||c.familiaTelefon||"";
+      familiesMap.set(c.alumne,{alumne:c.alumne,email,telefon});
+    });
+    res.json(Array.from(familiesMap.values()));
+  }catch(err){
+    res.status(500).json({error:err.message});
+  }
+});
+
+// 🔹 Actualitzar contacte d'una família
+app.put("/api/families/:alumne",async(req,res)=>{
+  try{
+    const alumne=decodeURIComponent(req.params.alumne);
+    const {email,telefon}=req.body;
+    await Classe.updateMany(
+      {alumne},
+      {$set:{familiaEmail:email||"",familiaTelefon:telefon||""}}
+    );
+    res.json({message:"Família actualitzada"});
+  }catch(err){
+    res.status(500).json({error:err.message});
+  }
+});
+
+// 🔹 Eliminar família i totes les seves classes
+app.delete("/api/families/:alumne",async(req,res)=>{
+  try{
+    const alumne=decodeURIComponent(req.params.alumne);
+    const result=await Classe.deleteMany({alumne});
+    res.json({message:"Família eliminada",deleted:result.deletedCount});
   }catch(err){
     res.status(500).json({error:err.message});
   }
