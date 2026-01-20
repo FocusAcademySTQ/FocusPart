@@ -167,13 +167,38 @@ app.get("/api/families",async(req,res)=>{
     const familiesMap=new Map();
     classes.forEach(c=>{
       if(!c.alumne)return;
-      familiesMap.set(c.alumne,{
-        alumne:c.alumne,
-        email:c.familiaEmail||"",
-        telefon:c.familiaTelefon||""
-      });
+      const existing=familiesMap.get(c.alumne)||{alumne:c.alumne,email:"",telefon:""};
+      const email=existing.email||c.familiaEmail||"";
+      const telefon=existing.telefon||c.familiaTelefon||"";
+      familiesMap.set(c.alumne,{alumne:c.alumne,email,telefon});
     });
     res.json(Array.from(familiesMap.values()));
+  }catch(err){
+    res.status(500).json({error:err.message});
+  }
+});
+
+// 🔹 Actualitzar contacte d'una família
+app.put("/api/families/:alumne",async(req,res)=>{
+  try{
+    const alumne=decodeURIComponent(req.params.alumne);
+    const {email,telefon}=req.body;
+    await Classe.updateMany(
+      {alumne},
+      {$set:{familiaEmail:email||"",familiaTelefon:telefon||""}}
+    );
+    res.json({message:"Família actualitzada"});
+  }catch(err){
+    res.status(500).json({error:err.message});
+  }
+});
+
+// 🔹 Eliminar família i totes les seves classes
+app.delete("/api/families/:alumne",async(req,res)=>{
+  try{
+    const alumne=decodeURIComponent(req.params.alumne);
+    const result=await Classe.deleteMany({alumne});
+    res.json({message:"Família eliminada",deleted:result.deletedCount});
   }catch(err){
     res.status(500).json({error:err.message});
   }

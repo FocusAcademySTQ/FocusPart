@@ -106,12 +106,14 @@
 <div id="familiesModal" class="modal">
 <div class="modal-content">
 <h2 class="text-lg font-semibold mb-4">👨‍👩‍👧‍👦 Famílies i contactes</h2>
+<p class="text-xs text-gray-500 mb-3">Contactes aportats pels professors en crear classes.</p>
 <table class="w-full text-sm border">
 <thead>
 <tr class="bg-gray-100">
 <th class="border p-2">Família</th>
 <th class="border p-2">Telèfon</th>
 <th class="border p-2">Correu</th>
+<th class="border p-2">Accions</th>
 </tr>
 </thead>
 <tbody id="familiesTable"></tbody>
@@ -232,16 +234,50 @@ function impersonaProfessor(id){window.location.href="/admin/impersona/"+id}
 document.getElementById("manageProfessorsBtn").addEventListener("click",()=>{document.getElementById("profeModal").style.display="flex"});
 document.getElementById("closeModal").addEventListener("click",()=>{document.getElementById("profeModal").style.display="none"});
 document.getElementById("manageFamiliesBtn").addEventListener("click",async()=>{
-  const res=await fetch("/api/families");
-  const families=await res.json();
-  document.getElementById("familiesTable").innerHTML=families.map(f=>`
-  <tr>
-    <td class="border p-2">Família de ${f.alumne}</td>
-    <td class="border p-2">${f.telefon||"-"}</td>
-    <td class="border p-2">${f.email||"-"}</td>
-  </tr>`).join("");
+  await loadFamilies();
   document.getElementById("familiesModal").style.display="flex";
 });
+async function loadFamilies(){
+  const res=await fetch("/api/families");
+  const families=await res.json();
+  document.getElementById("familiesTable").innerHTML=families.map(f=>{
+    const familyId=encodeURIComponent(f.alumne);
+    return `
+  <tr>
+    <td class="border p-2">Família de ${f.alumne}</td>
+    <td class="border p-2">
+      <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-tel value="${f.telefon||""}">
+    </td>
+    <td class="border p-2">
+      <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-email value="${f.email||""}">
+    </td>
+    <td class="border p-2">
+      <div class="flex flex-wrap gap-2">
+        <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateFamily('${familyId}')">Guardar</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteFamily('${familyId}')">Eliminar</button>
+      </div>
+    </td>
+  </tr>`;
+  }).join("");
+}
+async function updateFamily(familyId){
+  const telInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-tel]`);
+  const emailInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-email]`);
+  await fetch(`/api/families/${familyId}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      telefon:telInput?.value.trim()||"",
+      email:emailInput?.value.trim()||""
+    })
+  });
+  loadFamilies();
+}
+async function deleteFamily(familyId){
+  if(!confirm("Segur que vols eliminar aquesta família?"))return;
+  await fetch(`/api/families/${familyId}`,{method:"DELETE"});
+  loadFamilies();
+}
 document.getElementById("closeFamiliesModal").addEventListener("click",()=>{document.getElementById("familiesModal").style.display="none"});
 document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
 document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
