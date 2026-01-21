@@ -167,12 +167,21 @@ app.get("/api/families",async(req,res)=>{
     const familiesMap=new Map();
     classes.forEach(c=>{
       if(!c.alumne)return;
-      const existing=familiesMap.get(c.alumne)||{alumne:c.alumne,email:"",telefon:""};
+      const existing=familiesMap.get(c.alumne)||{alumne:c.alumne,email:"",telefon:"",profes:new Set()};
       const email=existing.email||c.familiaEmail||"";
       const telefon=existing.telefon||c.familiaTelefon||"";
-      familiesMap.set(c.alumne,{alumne:c.alumne,email,telefon});
+      if(c.profe){
+        existing.profes.add(c.profe);
+      }
+      familiesMap.set(c.alumne,{alumne:c.alumne,email,telefon,profes:existing.profes});
     });
-    res.json(Array.from(familiesMap.values()));
+    const families=Array.from(familiesMap.values()).map(f=>({
+      alumne:f.alumne,
+      email:f.email,
+      telefon:f.telefon,
+      profes:Array.from(f.profes)
+    }));
+    res.json(families);
   }catch(err){
     res.status(500).json({error:err.message});
   }
