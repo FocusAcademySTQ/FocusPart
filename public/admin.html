@@ -114,6 +114,7 @@
 <thead>
 <tr class="bg-gray-100">
 <th class="border p-2">Família</th>
+<th class="border p-2">Professor</th>
 <th class="border p-2">Telèfon</th>
 <th class="border p-2">Correu</th>
 <th class="border p-2">Accions</th>
@@ -249,6 +250,7 @@ async function loadFamilies(){
     return `
   <tr>
     <td class="border p-2">Família de ${f.alumne}</td>
+    <td class="border p-2">${(f.profes||[]).join(", ")}</td>
     <td class="border p-2">
       <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-name="${f.alumne}" data-family-tel value="${f.telefon||""}">
     </td>
