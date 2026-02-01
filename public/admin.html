@@ -10,6 +10,8 @@
 .class{border-radius:4px;padding:2px 4px;margin-top:2px;color:#1e293b;font-weight:500}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
 .modal-content{background:white;padding:20px;border-radius:8px;max-height:80%;overflow-y:auto;width:600px}
+.profe-toggle{cursor:pointer;text-decoration:inherit}
+.profe-toggle.completed{color:#94a3b8;text-decoration:line-through}
 </style>
 </head>
 <body class="bg-gray-50 p-6 font-sans">
@@ -131,6 +133,7 @@
 const admin=JSON.parse(localStorage.getItem("admin"));
 if(!admin||admin.role!=="admin"){window.location.href="index.html"}
 let currentMonth=new Date();let professors=[];let familiesCache=[];
+const meetingStatus=JSON.parse(localStorage.getItem("adminMeetingStatus")||"{}");
 async function loadProfessors(){
 const res=await fetch("/api/professors");professors=await res.json();
 document.getElementById("profeList").innerHTML=professors.map(p=>`<li>${p.nom} (${p.usuari}) - Valoració: ${p.valoracio}€</li>`).join("");
@@ -169,6 +172,14 @@ await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/j
 current.setDate(current.getDate()+7)}})}
 e.target.reset();loadCalendar()});
 function getMonthDays(year,month){const lastDay=new Date(year,month+1,0);let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days}
+function getMonthKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`}
+function toggleMeetingDone(profe){
+const monthKey=getMonthKey(currentMonth);
+const monthState=meetingStatus[monthKey]||{};
+monthState[profe]=!monthState[profe];
+meetingStatus[monthKey]=monthState;
+localStorage.setItem("adminMeetingStatus",JSON.stringify(meetingStatus));
+}
 async function loadCalendar(){
 const year=currentMonth.getFullYear();const month=currentMonth.getMonth();
 document.getElementById("monthLabel").textContent=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
@@ -191,7 +202,12 @@ html+="</div>";cal.innerHTML+=html})}
 function calcularDiners(classes){
 const perProfe={};let total=0;
 classes.forEach(c=>{if(!c.cancelled){const prof=professors.find(p=>p.nom===c.profe);if(prof){perProfe[c.profe]=(perProfe[c.profe]||0)+prof.valoracio;total+=prof.valoracio}}});
-document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>`<li>${p}: ${amt} €</li>`).join("");
+const monthKey=getMonthKey(currentMonth);
+const monthState=meetingStatus[monthKey]||{};
+document.getElementById("dinersProfessors").innerHTML=Object.entries(perProfe).map(([p,amt])=>{
+const completed=monthState[p];
+return `<li><button type="button" class="profe-toggle${completed?" completed":""}" data-profe="${p}">${p}</button>: ${amt} €</li>`;
+}).join("");
 document.getElementById("totalGlobal").textContent=total}
 function renderProfessorsTable(profes){
 document.getElementById("profeTable").innerHTML=profes.map(p=>`
@@ -318,6 +334,12 @@ document.getElementById("closeFamiliesModal").addEventListener("click",()=>{docu
 document.getElementById("copyFamiliesBtn").addEventListener("click",copyFamiliesToClipboard);
 document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()-1);loadCalendar()});
 document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth.setMonth(currentMonth.getMonth()+1);loadCalendar()});
+document.getElementById("dinersProfessors").addEventListener("click",event=>{
+const target=event.target.closest(".profe-toggle");
+if(!target)return;
+toggleMeetingDone(target.dataset.profe);
+target.classList.toggle("completed");
+});
 loadProfessors();loadCalendar();
 </script>
 </body>
