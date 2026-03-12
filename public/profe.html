@@ -18,7 +18,11 @@
 <section class="mb-8 p-4 bg-white rounded shadow">
 <h2 class="text-lg font-semibold mb-3">➕ Afegir nova classe</h2>
 <form id="newClassForm" class="grid grid-cols-4 gap-2">
-<input type="text" id="alumne" placeholder="Nom de l'alumne" class="border p-2 rounded col-span-1" required>
+<select id="alumneSelect" class="border p-2 rounded col-span-2" required>
+  <option value="">Selecciona família</option>
+  <option value="__new__">+ Afegir nova família</option>
+</select>
+<input type="text" id="alumneNou" placeholder="Nom de l'alumne nou" class="border p-2 rounded col-span-2 hidden">
 <input type="tel" id="familiaTelefon" placeholder="Telèfon família" class="border p-2 rounded col-span-1">
 <input type="email" id="familiaEmail" placeholder="Correu família" class="border p-2 rounded col-span-2">
 <input type="date" id="data" class="border p-2 rounded col-span-1" required>
@@ -33,7 +37,7 @@
 <label><input type="checkbox" value="0" class="dayCheck"> Diumenge</label>
 </div>
 <label class="col-span-4">Fins a: <input type="date" id="fiRepeticio" class="border p-2 rounded"></label>
-<p class="col-span-4 text-xs text-gray-500">💡 El telèfon i correu són opcionals i es veuen al panell admin.</p>
+<p class="col-span-4 text-xs text-gray-500">💡 Pots triar una família existent o crear-ne una de nova.</p>
 <button class="col-span-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Afegir classe</button>
 </form>
 </section>
@@ -58,118 +62,154 @@ if(!profe) window.location.href="index.html";
 document.getElementById("welcome").textContent="Benvingut/da, "+profe.nom;
 let currentMonth=new Date();
 
+const alumneSelect=document.getElementById("alumneSelect");
+const alumneNou=document.getElementById("alumneNou");
+
+alumneSelect.addEventListener("change",()=>{
+  const isNew=alumneSelect.value==="__new__";
+  alumneNou.classList.toggle("hidden",!isNew);
+  alumneNou.required=isNew;
+  if(!isNew){
+    alumneNou.value="";
+  }
+});
+
+function populateFamilySelect(families){
+  const previousValue=alumneSelect.value;
+  alumneSelect.innerHTML=`
+    <option value="">Selecciona família</option>
+    ${families.map(f=>`<option value="${f.alumne.replace(/"/g,"&quot;")}">${f.alumne}</option>`).join("")}
+    <option value="__new__">+ Afegir nova família</option>
+  `;
+  if(previousValue&&[...alumneSelect.options].some(option=>option.value===previousValue)){
+    alumneSelect.value=previousValue;
+  }
+}
+
 // 👉 Format de data local (YYYY-MM-DD)
 function formatDateLocal(date){
   return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
 }
 
 document.getElementById("newClassForm").addEventListener("submit",async e=>{
-e.preventDefault();
-const alumne=document.getElementById("alumne").value;
-const familiaTelefon=document.getElementById("familiaTelefon").value.trim();
-const familiaEmail=document.getElementById("familiaEmail").value.trim();
-const data=document.getElementById("data").value;
-const hora=document.getElementById("hora").value;
+  e.preventDefault();
 
-// Classe inicial
-await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora,familiaEmail,familiaTelefon})});
+  const alumne=alumneSelect.value==="__new__"?alumneNou.value.trim():alumneSelect.value;
+  if(!alumne){
+    alert("Selecciona una família existent o escriu el nom d'una nova.");
+    return;
+  }
 
-// Repeticions
-const checks=document.querySelectorAll(".dayCheck:checked");
-if(checks.length>0){
-  let endInput=document.getElementById("fiRepeticio").value;
-  let end=endInput?new Date(endInput):new Date(data);
-  if(!endInput) end.setMonth(end.getMonth()+3);
-  let startDate=new Date(data);
+  const familiaTelefon=document.getElementById("familiaTelefon").value.trim();
+  const familiaEmail=document.getElementById("familiaEmail").value.trim();
+  const data=document.getElementById("data").value;
+  const hora=document.getElementById("hora").value;
 
-  checks.forEach(async chk=>{
-    let targetDay=parseInt(chk.value);
-    let current=new Date(startDate);
+  // Classe inicial
+  await fetch("/api/classes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({alumne,profe:profe.nom,data,hora,familiaEmail,familiaTelefon})});
 
-    // Avança fins al primer dia que coincideixi
-    while(current.getDay()!==targetDay){
-      current.setDate(current.getDate()+1);
-    }
+  // Repeticions
+  const checks=document.querySelectorAll(".dayCheck:checked");
+  if(checks.length>0){
+    let endInput=document.getElementById("fiRepeticio").value;
+    let end=endInput?new Date(endInput):new Date(data);
+    if(!endInput) end.setMonth(end.getMonth()+3);
+    let startDate=new Date(data);
 
-    while(current<=end){
-      // Evitem duplicar el primer dia
-      if(formatDateLocal(current)!==data){
-        await fetch("/api/classes",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora,familiaEmail,familiaTelefon})
-        });
+    checks.forEach(async chk=>{
+      let targetDay=parseInt(chk.value);
+      let current=new Date(startDate);
+
+      while(current.getDay()!==targetDay){
+        current.setDate(current.getDate()+1);
       }
-      current.setDate(current.getDate()+7);
-    }
-  });
-}
-e.target.reset();
-loadCalendar();
+
+      while(current<=end){
+        if(formatDateLocal(current)!==data){
+          await fetch("/api/classes",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({alumne,profe:profe.nom,data:formatDateLocal(current),hora,familiaEmail,familiaTelefon})
+          });
+        }
+        current.setDate(current.getDate()+7);
+      }
+    });
+  }
+
+  e.target.reset();
+  alumneNou.classList.add("hidden");
+  alumneNou.required=false;
+  loadCalendar();
 });
 
 async function loadCalendar(){
-const year=currentMonth.getFullYear();
-const month=currentMonth.getMonth();
-const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
-document.getElementById("monthLabel").textContent=label;
-const res=await fetch("/api/classes");
-let classes=await res.json();
-classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
-// 👉 Vista calendari
-const days=getMonthDays(year,month);
-const cal=document.getElementById("calendar");
-cal.innerHTML="";
-let startDay=(new Date(year,month,1).getDay()+6)%7;
-for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
-days.forEach(d=>{
-const iso=formatDateLocal(d);
-const dayClasses=classes.filter(c=>c.data===iso);
-let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
-dayClasses.forEach(c=>{
-html+=`<div class="class"><span>${c.hora} - ${c.alumne}</span><div><button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button><button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button></div></div>`;
-});
-html+="</div>";
-cal.innerHTML+=html;
-});
-// 👉 Les meves famílies (només si tenen classes actives)
-const familiesMap=new Map();
-classes.filter(c=>!c.cancelled).forEach(c=>{
-  if(!familiesMap.has(c.alumne)){
-    familiesMap.set(c.alumne,{
-      alumne:c.alumne,
-      email:c.familiaEmail||"",
-      telefon:c.familiaTelefon||""
+  const year=currentMonth.getFullYear();
+  const month=currentMonth.getMonth();
+  const label=currentMonth.toLocaleString("ca-ES",{month:"long",year:"numeric"});
+  document.getElementById("monthLabel").textContent=label;
+
+  const res=await fetch("/api/classes");
+  let classes=await res.json();
+  classes=classes.filter(c=>c.profe===profe.nom&&!c.cancelled);
+
+  // 👉 Vista calendari
+  const days=getMonthDays(year,month);
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
+  let startDay=(new Date(year,month,1).getDay()+6)%7;
+  for(let i=0;i<startDay;i++){cal.innerHTML+="<div></div>"}
+  days.forEach(d=>{
+    const iso=formatDateLocal(d);
+    const dayClasses=classes.filter(c=>c.data===iso);
+    let html=`<div class="day"><div class="font-bold mb-1">${d.getDate()}</div>`;
+    dayClasses.forEach(c=>{
+      html+=`<div class="class"><span>${c.hora} - ${c.alumne}</span><div><button class="btn bg-green-200 hover:bg-green-300" onclick="toggleDone('${c._id}')">✔️</button><button class="btn bg-red-200 hover:bg-red-300" onclick="toggleCancel('${c._id}')">❌</button></div></div>`;
     });
-  }
-});
-const families=[...familiesMap.values()];
-document.getElementById("familiesList").innerHTML=families.map(f=>{
-  const familyId=encodeURIComponent(f.alumne);
-  return `
-  <div class="border rounded p-2">
-    <div class="font-semibold mb-2">Família de ${f.alumne}</div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
-      <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-tel placeholder="Telèfon" value="${f.telefon||""}">
-      <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-email placeholder="Correu" value="${f.email||""}">
-      <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateFamily('${familyId}')">Guardar</button>
-    </div>
-  </div>`;
-}).join("");
-document.getElementById("familiesTotal").textContent="Total: "+families.length+" famílies";
+    html+="</div>";
+    cal.innerHTML+=html;
+  });
+
+  // 👉 Les meves famílies (només si tenen classes actives)
+  const familiesMap=new Map();
+  classes.filter(c=>!c.cancelled).forEach(c=>{
+    if(!familiesMap.has(c.alumne)){
+      familiesMap.set(c.alumne,{
+        alumne:c.alumne,
+        email:c.familiaEmail||"",
+        telefon:c.familiaTelefon||""
+      });
+    }
+  });
+  const families=[...familiesMap.values()];
+  populateFamilySelect(families);
+
+  document.getElementById("familiesList").innerHTML=families.map(f=>{
+    const familyId=encodeURIComponent(f.alumne);
+    return `
+    <div class="border rounded p-2">
+      <div class="font-semibold mb-2">Família de ${f.alumne}</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+        <input type="tel" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-tel placeholder="Telèfon" value="${f.telefon||""}">
+        <input type="email" class="border p-1 rounded w-full" data-family-id="${familyId}" data-family-email placeholder="Correu" value="${f.email||""}">
+        <button class="bg-blue-500 text-white px-2 py-1 rounded" onclick="updateFamily('${familyId}')">Guardar</button>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("familiesTotal").textContent="Total: "+families.length+" famílies";
 }
 
 function getMonthDays(year,month){
-const lastDay=new Date(year,month+1,0);
-let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
+  const lastDay=new Date(year,month+1,0);
+  let days=[];for(let d=1;d<=lastDay.getDate();d++){days.push(new Date(year,month,d))}return days;
 }
 async function toggleDone(id){
-await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
-loadCalendar();
+  await fetch(`/api/classes/${id}/toggle`,{method:"PUT"});
+  loadCalendar();
 }
 async function toggleCancel(id){
-await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
-loadCalendar();
+  await fetch(`/api/classes/${id}/cancel`,{method:"PUT"});
+  loadCalendar();
 }
 async function updateFamily(familyId){
   const telInput=document.querySelector(`input[data-family-id='${familyId}'][data-family-tel]`);
